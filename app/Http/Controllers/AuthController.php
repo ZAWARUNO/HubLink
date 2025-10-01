@@ -35,7 +35,11 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-            return redirect()->intended('/');
+            $user = Auth::user();
+            if (!$user->domain) {
+                return redirect()->route('cms.domain.setup');
+            }
+            return redirect()->route('cms.home');
         }
 
         return back()->withErrors([
@@ -66,8 +70,7 @@ class AuthController extends Controller
         ]);
 
         Auth::login($user);
-
-        return redirect('/');
+        return redirect()->route('cms.domain.setup');
     }
 
     public function logout(Request $request)
