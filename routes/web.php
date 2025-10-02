@@ -22,6 +22,9 @@ Route::middleware('auth')->prefix('cms')->name('cms.')->group(function () {
     Route::get('/', [CmsHomeController::class, 'index'])->name('home');
     Route::get('/domain/setup', [CmsDomainController::class, 'showSetupForm'])->name('domain.setup');
     Route::post('/domain', [CmsDomainController::class, 'store'])->name('domain.store');
+    // Domain edit routes
+    Route::get('/domain/edit', [CmsDomainController::class, 'showEditForm'])->name('domain.edit');
+    Route::put('/domain', [CmsDomainController::class, 'update'])->name('domain.update');
 });
 
 // Public profile by slug

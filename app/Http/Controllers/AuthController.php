@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Domain;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -69,7 +70,15 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        // Create domain entry with slug matching username
+        Domain::create([
+            'user_id' => $user->id,
+            'slug' => $request->username,
+            'title' => null,
+        ]);
+
         Auth::login($user);
+        // Redirect to domain setup page which will now function as edit form
         return redirect()->route('cms.domain.setup');
     }
 
