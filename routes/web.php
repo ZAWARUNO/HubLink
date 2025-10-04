@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CMS\HomeController as CmsHomeController;
 use App\Http\Controllers\CMS\DomainController as CmsDomainController;
+use App\Http\Controllers\CMS\BuilderController as CmsBuilderController;
 use App\Models\Domain;
 
 Route::get('/', function () {
@@ -25,6 +26,15 @@ Route::middleware('auth')->prefix('cms')->name('cms.')->group(function () {
     // Domain edit routes
     Route::get('/domain/edit', [CmsDomainController::class, 'showEditForm'])->name('domain.edit');
     Route::put('/domain', [CmsDomainController::class, 'update'])->name('domain.update');
+    
+    // Builder routes
+    Route::get('/builder', [CmsBuilderController::class, 'index'])->name('builder.index');
+    Route::get('/builder/{domainId}', [CmsBuilderController::class, 'show'])->name('builder.show');
+    Route::post('/builder/{domainId}/component', [CmsBuilderController::class, 'storeComponent'])->name('builder.component.store');
+    Route::put('/builder/{domainId}/component/{componentId}', [CmsBuilderController::class, 'updateComponent'])->name('builder.component.update');
+    Route::delete('/builder/{domainId}/component/{componentId}', [CmsBuilderController::class, 'deleteComponent'])->name('builder.component.delete');
+    Route::post('/builder/{domainId}/reorder', [CmsBuilderController::class, 'reorderComponents'])->name('builder.components.reorder');
+    Route::post('/builder/{domainId}/publish', [CmsBuilderController::class, 'publishComponents'])->name('builder.components.publish');
 });
 
 // Public profile by slug

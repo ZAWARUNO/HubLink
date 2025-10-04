@@ -26,4 +26,9 @@ class Domain extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function components()
+    {
+        return $this->hasMany(Component::class);
+    }
 }

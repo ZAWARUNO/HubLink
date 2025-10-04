@@ -12,32 +12,37 @@ class DomainController extends Controller
 {
     public function showSetupForm()
     {
-        $domain = Auth::user()->domain;
-        // If user doesn't have a domain, create a default one
-        if (!$domain) {
+        $domains = Auth::user()->domains;
+        // If user doesn't have any domains, show setup form
+        if ($domains->count() == 0) {
             return view('cms.pages.domain-setup');
         }
-        // If user already has a domain, show edit form with existing data
+        // If user already has domains, show the first one for editing
+        $domain = $domains->first();
         return view('cms.pages.domain-setup', compact('domain'));
     }
 
     public function showEditForm()
     {
-        $domain = Auth::user()->domain;
-        // If user doesn't have a domain, redirect to setup
-        if (!$domain) {
+        $domains = Auth::user()->domains;
+        // If user doesn't have any domains, redirect to setup
+        if ($domains->count() == 0) {
             return redirect()->route('cms.domain.setup');
         }
+        // Show the first domain for editing
+        $domain = $domains->first();
         return view('cms.pages.domain-setup', compact('domain'));
     }
 
     public function store(Request $request)
     {
-        // Check if user already has a domain
-        $existingDomain = Auth::user()->domain;
+        // Check if user already has domains
+        $existingDomains = Auth::user()->domains;
         
-        if ($existingDomain) {
-            // Update existing domain instead of creating new one
+        if ($existingDomains->count() > 0) {
+            // Update the first domain instead of creating new one
+            $existingDomain = $existingDomains->first();
+            
             $request->validate([
                 'slug' => ['required', 'alpha_dash', 'min:3', 'max:30', 'unique:domains,slug,' . $existingDomain->id],
                 'title' => ['nullable', 'string', 'max:100'],
@@ -57,7 +62,7 @@ class DomainController extends Controller
             return redirect()->route('cms.home')->with('status', 'Domain berhasil diperbarui: ' . $existingDomain->slug);
         }
 
-        // If no existing domain, create new one (original behavior)
+        // If no existing domains, create new one (original behavior)
         $request->validate([
             'slug' => ['required', 'alpha_dash', 'min:3', 'max:30', 'unique:domains,slug'],
             'title' => ['nullable', 'string', 'max:100'],
@@ -84,13 +89,15 @@ class DomainController extends Controller
 
     public function update(Request $request)
     {
-        $domain = Auth::user()->domain;
+        $domains = Auth::user()->domains;
         
-        // If user doesn't have a domain, redirect to setup
-        if (!$domain) {
+        // If user doesn't have any domains, redirect to setup
+        if ($domains->count() == 0) {
             return redirect()->route('cms.domain.setup');
         }
 
+        $domain = $domains->first();
+        
         $request->validate([
             'slug' => ['required', 'alpha_dash', 'min:3', 'max:30', 'unique:domains,slug,' . $domain->id],
             'title' => ['nullable', 'string', 'max:100'],

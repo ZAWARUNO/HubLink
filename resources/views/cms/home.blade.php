@@ -21,7 +21,7 @@
 						</div>
 					</div>
 					<div class="flex gap-2">
-						<button class="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg">Bagikan</button>
+						<a href="{{ route('cms.builder.index') }}" class="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg">Builder</a>
 						<a href="{{ route('cms.domain.setup') }}" class="px-4 py-2 border rounded-lg">Edit</a>
 					</div>
 				</div>
@@ -58,5 +58,3 @@
 	</div>
 </div>
 @endsection
-
-

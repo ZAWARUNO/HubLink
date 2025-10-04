@@ -1,0 +1,38 @@
+/* Builder specific styles */
+.component-wrapper {
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.component-wrapper:hover {
+    box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.component-wrapper.selected {
+    box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.component-item {
+    user-select: none;
+}
+
+.component-item:active {
+    opacity: 0.8;
+    transform: scale(0.98);
+}
+
+#canvas {
+    min-height: 400px;
+    transition: all 0.2s ease;
+}
+
+#canvas.drag-over {
+    border: 2px dashed #3b82f6;
+    background-color: #dbeafe;
+    border-radius: 0.5rem;
+}
+
+/* Preview modal */
+#preview-modal {
+    z-index: 1000;
+}

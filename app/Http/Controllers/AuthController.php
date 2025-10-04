@@ -78,8 +78,8 @@ class AuthController extends Controller
         ]);
 
         Auth::login($user);
-        // Redirect to domain setup page which will now function as edit form
-        return redirect()->route('cms.domain.setup');
+        // Redirect to builder index page
+        return redirect()->route('cms.builder.index');
     }
 
     public function logout(Request $request)

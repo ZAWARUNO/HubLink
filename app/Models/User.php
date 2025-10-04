@@ -47,6 +47,11 @@ class User extends Authenticatable
         ];
     }
 
+    public function domains()
+    {
+        return $this->hasMany(Domain::class);
+    }
+
     public function domain()
     {
         return $this->hasOne(Domain::class);
