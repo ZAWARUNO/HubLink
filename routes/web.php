@@ -18,6 +18,10 @@ Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('regi
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+// Profile edit route (require auth)
+Route::middleware('auth')->get('/profile/edit', [AuthController::class, 'showProfileEditForm'])->name('profile.edit');
+Route::middleware('auth')->put('/profile', [AuthController::class, 'updateProfile'])->name('profile.update');
+
 // CMS routes (require auth)
 Route::middleware('auth')->prefix('cms')->name('cms.')->group(function () {
     Route::get('/', [CmsHomeController::class, 'index'])->name('home');
