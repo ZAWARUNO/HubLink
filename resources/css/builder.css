@@ -2,18 +2,26 @@
 .component-wrapper {
     position: relative;
     transition: all 0.2s ease;
+    background-color: white;
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid transparent;
 }
 
 .component-wrapper:hover {
     box-shadow: 0 0 0 2px #3b82f6;
+    border-color: #3b82f6;
 }
 
 .component-wrapper.selected {
     box-shadow: 0 0 0 2px #3b82f6;
+    border-color: #3b82f6;
 }
 
 .component-item {
     user-select: none;
+    cursor: move;
+    transition: all 0.2s ease;
 }
 
 .component-item:active {
@@ -21,9 +29,20 @@
     transform: scale(0.98);
 }
 
+.component-item:hover {
+    background-color: #f3f4f6;
+}
+
+.component-item.dragging {
+    opacity: 0.5;
+}
+
 #canvas {
     min-height: 400px;
     transition: all 0.2s ease;
+    background-color: #f9fafb;
+    border-radius: 0.5rem;
+    padding: 1rem;
 }
 
 #canvas.drag-over {
@@ -32,7 +51,66 @@
     border-radius: 0.5rem;
 }
 
+/* SortableJS styles */
+.sortable-ghost {
+    opacity: 0.5;
+    background-color: #f0f9ff;
+    border: 1px dashed #3b82f6;
+}
+
+.sortable-drag {
+    opacity: 0.8;
+    background-color: #dbeafe;
+    border: 1px solid #3b82f6;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transform: rotate(5deg);
+}
+
+.sortable-chosen {
+    background-color: #eff6ff;
+    border: 1px solid #3b82f6;
+}
+
 /* Preview modal */
 #preview-modal {
     z-index: 1000;
+}
+
+/* Properties panel */
+#properties-panel {
+    background-color: white;
+    border-left: 1px solid #e5e7eb;
+}
+
+/* Toast notification */
+#toast {
+    z-index: 1000;
+}
+
+/* Button styles */
+.btn-primary {
+    background-color: #00c499;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #00a882;
+}
+
+/* Form elements */
+input,
+textarea,
+select {
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    padding: 0.5rem;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: #00c499;
+    box-shadow: 0 0 0 3px rgba(0, 196, 153, 0.2);
 }

@@ -1,6 +1,38 @@
 @extends('cms.layouts.app')
 
 @section('content')
+<style>
+    .sortable-ghost {
+        opacity: 0.5;
+        background-color: #f0f9ff;
+        border: 1px dashed #3b82f6;
+    }
+    
+    .sortable-drag {
+        opacity: 0.8;
+        background-color: #dbeafe;
+        border: 1px solid #3b82f6;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    
+    .sortable-chosen {
+        background-color: #eff6ff;
+        border: 1px solid #3b82f6;
+    }
+    
+    /* Ensure canvas has proper styling for drag over */
+    #canvas.drag-over {
+        border: 2px dashed #3b82f6;
+        background-color: #dbeafe;
+        border-radius: 0.5rem;
+    }
+    
+    /* Add specific styling for component items during drag */
+    .component-item.dragging {
+        opacity: 0.5;
+    }
+</style>
+
 <div id="builder-app" class="flex flex-col h-full">
     <!-- Builder Header -->
     <div class="bg-white border-b p-4 flex justify-between items-center">
@@ -34,7 +66,7 @@
             <div class="flex-1 overflow-y-auto p-4 space-y-2">
                 <div draggable="true" data-type="text" class="component-item p-3 border rounded-lg cursor-move hover:bg-gray-50 flex items-center gap-2 transition-colors duration-200">
                     <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 00-2 2v9a2 2 0 002 2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                     </svg>
                     <span>Text</span>
                 </div>
@@ -154,24 +186,40 @@
 
 <!-- Preview Modal -->
 <div id="preview-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        <div class="p-4 border-b flex justify-between items-center">
-            <h3 class="font-semibold text-gray-900">Page Preview</h3>
-            <button onclick="closePreview()" class="text-gray-500 hover:text-gray-700">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-auto relative">
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+            <h3 class="text-lg font-semibold text-gray-900">Page Preview</h3>
+            <button onclick="closePreview()" class="text-gray-400 hover:text-gray-500">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
             </button>
         </div>
-        <div class="flex-1 overflow-auto p-6 bg-gray-50">
-            <div class="max-w-2xl mx-auto bg-white shadow-sm rounded-lg p-6">
-                <div id="preview-content">
-                    <!-- Preview content will be loaded here -->
-                </div>
-            </div>
+        <div id="preview-content" class="p-6">
+            <!-- Preview content will be inserted here -->
         </div>
     </div>
 </div>
+
+<!-- Toast Notification -->
+<div id="toast" class="fixed top-4 right-4 z-50 transform transition-transform duration-300 ease-in-out translate-x-full">
+    <div class="flex items-center p-4 text-sm rounded-lg shadow-lg min-w-[300px] max-w-md">
+        <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg me-3">
+            <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+            </svg>
+        </div>
+        <div class="ms-3 text-sm font-normal" id="toast-message"></div>
+        <button type="button" class="ms-auto -mx-1.5 -my-1.5 rounded-lg p-1.5 inline-flex items-center justify-center h-8 w-8 hover:opacity-75" onclick="hideToast()">
+            <span class="sr-only">Close</span>
+            <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+            </svg>
+        </button>
+    </div>
+</div>
+
+<!-- Include SortableJS from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <script>
     const domainId = {{ $domain->id }};
@@ -182,39 +230,123 @@
         // Make components draggable
         document.querySelectorAll('.component-item').forEach(item => {
             item.addEventListener('dragstart', dragStart);
+            item.addEventListener('dragend', dragEnd);
         });
         
         // Make canvas a drop zone
         const canvas = document.getElementById('canvas');
-        canvas.addEventListener('dragover', dragOver);
-        canvas.addEventListener('dragenter', dragEnter);
-        canvas.addEventListener('dragleave', dragLeave);
-        canvas.addEventListener('drop', drop);
+        if (canvas) {
+            canvas.addEventListener('dragover', dragOver);
+            canvas.addEventListener('dragenter', dragEnter);
+            canvas.addEventListener('dragleave', dragLeave);
+            canvas.addEventListener('drop', drop);
+        }
+        
+        // Initialize SortableJS for component reordering
+        if (typeof Sortable !== 'undefined' && canvas) {
+            const sortable = new Sortable(canvas, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                dragClass: 'sortable-drag',
+                chosenClass: 'sortable-chosen',
+                dragoverBubble: false,
+                fallbackTolerance: 3,
+                onEnd: function (evt) {
+                    // Update order on server
+                    reorderComponents();
+                }
+            });
+        } else {
+            console.warn('SortableJS not loaded or canvas not found');
+        }
     });
     
     function dragStart(e) {
+        // Validasi event
+        if (!e || !e.target) {
+            console.error('Invalid drag event');
+            return;
+        }
+        
+        // Pastikan target memiliki dataset.type
+        if (!e.target.dataset || !e.target.dataset.type) {
+            console.error('Component item missing type data');
+            return;
+        }
+        
         e.dataTransfer.setData('text/plain', e.target.dataset.type);
         e.dataTransfer.effectAllowed = 'copy';
+        
+        // Add visual feedback
+        e.target.classList.add('dragging');
+    }
+    
+    // Add dragEnd function to clean up visual feedback
+    function dragEnd(e) {
+        // Validasi event
+        if (!e || !e.target) {
+            console.error('Invalid drag event');
+            return;
+        }
+        
+        // Remove visual feedback
+        e.target.classList.remove('dragging');
     }
     
     function dragOver(e) {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'copy';
+        
+        // Tambahkan visual feedback saat drag over canvas
+        const canvas = document.getElementById('canvas');
+        if (!canvas.classList.contains('drag-over')) {
+            canvas.classList.add('drag-over');
+        }
     }
     
     function dragEnter(e) {
         e.preventDefault();
-        document.getElementById('canvas').classList.add('drag-over');
+        
+        // Validasi event
+        if (!e) {
+            console.error('Invalid drag event');
+            return;
+        }
+        
+        const canvas = document.getElementById('canvas');
+        if (canvas) {
+            canvas.classList.add('drag-over');
+        }
     }
     
     function dragLeave(e) {
         e.preventDefault();
-        document.getElementById('canvas').classList.remove('drag-over');
+        
+        // Hanya hapus class jika mouse benar-benar keluar dari canvas
+        const canvas = document.getElementById('canvas');
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX;
+        const y = e.clientY;
+        
+        // Jika mouse masih dalam bounds canvas, jangan hapus class
+        if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) {
+            canvas.classList.remove('drag-over');
+        }
     }
     
     function drop(e) {
         e.preventDefault();
-        document.getElementById('canvas').classList.remove('drag-over');
+        
+        // Validasi event
+        if (!e) {
+            console.error('Invalid drop event');
+            return;
+        }
+        
+        const canvas = document.getElementById('canvas');
+        if (canvas) {
+            canvas.classList.remove('drag-over');
+        }
         
         const type = e.dataTransfer.getData('text/plain');
         if (type) {
@@ -237,7 +369,7 @@
                 break;
             case 'button':
                 componentHtml = `
-                    <a href="#" class="px-4 py-2 bg-primary text-white rounded-lg block text-center">
+                    <a href="#" class="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg block text-center">
                         Button Text
                     </a>
                 `;
@@ -257,6 +389,9 @@
             case 'divider':
                 componentHtml = `<hr class="border-gray-300">`;
                 break;
+            default:
+                componentHtml = `<div class="text-red-500 p-2">Unknown component type: ${type}</div>`;
+                console.warn('Unknown component type:', type);
         }
         
         const componentWrapper = document.createElement('div');
@@ -292,6 +427,14 @@
         const order = Array.from(document.getElementById('canvas').children).indexOf(componentElement);
         const properties = getDefaultProperties(type);
         
+        // Validasi order
+        if (order === -1) {
+            console.error('Component not found in canvas');
+            showToast('Error saving component. Please try again.', 'error');
+            componentElement.remove();
+            return;
+        }
+        
         fetch(`/cms/builder/${domainId}/component`, {
             method: 'POST',
             headers: {
@@ -305,12 +448,23 @@
             })
         })
         .then(response => {
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Received non-JSON response: ' + response.status + ' ' + response.statusText);
+            }
+            
             if (!response.ok) {
-                throw new Error('Network response was not ok');
+                throw new Error('Network response was not ok: ' + response.status + ' ' + response.statusText);
             }
             return response.json();
         })
         .then(data => {
+            // Validasi data yang diterima
+            if (!data || !data.id) {
+                throw new Error('Invalid response data');
+            }
+            
             // Update the component with the real ID from the server
             const tempId = componentElement.dataset.id;
             componentElement.dataset.id = data.id;
@@ -326,35 +480,77 @@
             if (deleteButton) {
                 deleteButton.setAttribute('onclick', `deleteComponent(${data.id})`);
             }
+            
+            // Show success message
+            showToast('Component added successfully!', 'success');
         })
         .catch(error => {
             console.error('Error saving component:', error);
-            alert('Error saving component. Please try again.');
+            showToast('Error saving component. Please try again.', 'error');
+            // Remove the component from DOM if save failed
+            try {
+                if (componentElement.parentNode) {
+                    componentElement.remove();
+                }
+            } catch (e) {
+                console.error('Error removing component element:', e);
+            }
         });
     }
     
     function getDefaultProperties(type) {
+        // Validasi parameter
+        if (!type) {
+            console.error('Invalid component type');
+            return {};
+        }
+        
         switch(type) {
             case 'text':
                 return { content: '<p>Edit this text content</p>' };
             case 'button':
-                return { text: 'Button Text', url: '#' };
+                return { 
+                    text: 'Button Text', 
+                    url: '#',
+                    style: 'primary'
+                };
             case 'image':
-                return { src: 'https://placehold.co/400x200', alt: 'Image' };
+                return { 
+                    src: 'https://placehold.co/400x200', 
+                    alt: 'Image',
+                    width: '100%',
+                    height: 'auto'
+                };
             case 'link':
-                return { text: 'Link text', url: '#' };
+                return { 
+                    text: 'Link text', 
+                    url: '#',
+                    target: '_blank'
+                };
             case 'divider':
-                return {};
+                return {
+                    style: 'solid',
+                    color: '#e5e7eb',
+                    thickness: '1px'
+                };
             default:
+                console.warn('Unknown component type:', type);
                 return {};
         }
     }
     
     function editComponent(componentId) {
+        // Validasi parameter
+        if (!componentId) {
+            console.error('Invalid component ID');
+            showToast('Invalid component ID. Please try again.', 'error');
+            return;
+        }
+        
         const component = document.querySelector(`.component-wrapper[data-id="${componentId}"]`);
         if (!component) {
             console.error('Component not found:', componentId);
-            alert('Component not found. Please try again.');
+            showToast('Component not found. Please try again.', 'error');
             return;
         }
         
@@ -362,7 +558,10 @@
         currentComponentType = component.dataset.type;
         
         // Show properties panel
-        document.getElementById('properties-panel').classList.remove('hidden');
+        const propertiesPanel = document.getElementById('properties-panel');
+        if (propertiesPanel) {
+            propertiesPanel.classList.remove('hidden');
+        }
         
         // Load properties based on component type
         loadProperties(component);
@@ -370,6 +569,12 @@
     
     function loadProperties(component) {
         const propertiesContent = document.getElementById('properties-content');
+        if (!propertiesContent) {
+            console.error('Properties content element not found');
+            showToast('Error loading properties. Please try again.', 'error');
+            return;
+        }
+        
         let properties = {};
         
         try {
@@ -406,6 +611,13 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">URL</label>
                             <input type="text" id="button-url" value="${properties.url || ''}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
                         </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Style</label>
+                            <select id="button-style" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option value="primary" ${properties.style === 'primary' ? 'selected' : ''}>Primary</option>
+                                <option value="secondary" ${properties.style === 'secondary' ? 'selected' : ''}>Secondary</option>
+                            </select>
+                        </div>
                         <button onclick="saveComponentProperties()" class="w-full bg-primary hover:bg-primary-dark text-white py-2 rounded-lg">
                             Save Changes
                         </button>
@@ -422,6 +634,14 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Alt Text</label>
                             <input type="text" id="image-alt" value="${properties.alt || ''}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Width</label>
+                            <input type="text" id="image-width" value="${properties.width || '100%'}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Height</label>
+                            <input type="text" id="image-height" value="${properties.height || 'auto'}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
                         </div>
                         <button onclick="saveComponentProperties()" class="w-full bg-primary hover:bg-primary-dark text-white py-2 rounded-lg">
                             Save Changes
@@ -440,6 +660,38 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">URL</label>
                             <input type="text" id="link-url" value="${properties.url || ''}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
                         </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Target</label>
+                            <select id="link-target" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option value="_self" ${properties.target === '_self' ? 'selected' : ''}>Same Window</option>
+                                <option value="_blank" ${properties.target === '_blank' ? 'selected' : ''}>New Window</option>
+                            </select>
+                        </div>
+                        <button onclick="saveComponentProperties()" class="w-full bg-primary hover:bg-primary-dark text-white py-2 rounded-lg">
+                            Save Changes
+                        </button>
+                    </div>
+                `;
+                break;
+            case 'divider':
+                html = `
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Style</label>
+                            <select id="divider-style" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option value="solid" ${properties.style === 'solid' ? 'selected' : ''}>Solid</option>
+                                <option value="dashed" ${properties.style === 'dashed' ? 'selected' : ''}>Dashed</option>
+                                <option value="dotted" ${properties.style === 'dotted' ? 'selected' : ''}>Dotted</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Color</label>
+                            <input type="color" id="divider-color" value="${properties.color || '#e5e7eb'}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Thickness</label>
+                            <input type="text" id="divider-thickness" value="${properties.thickness || '1px'}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                        </div>
                         <button onclick="saveComponentProperties()" class="w-full bg-primary hover:bg-primary-dark text-white py-2 rounded-lg">
                             Save Changes
                         </button>
@@ -447,32 +699,69 @@
                 `;
                 break;
             default:
-                html = '<p>No properties to edit for this component type.</p>';
+                html = '<p class="text-red-500">No properties to edit for this component type.</p>';
         }
         
         propertiesContent.innerHTML = html;
     }
     
     function saveComponentProperties() {
-        if (!currentComponentId || !currentComponentType) return;
+        if (!currentComponentId || !currentComponentType) {
+            console.error('No component selected');
+            showToast('No component selected. Please try again.', 'error');
+            return;
+        }
         
         let properties = {};
         
         switch(currentComponentType) {
             case 'text':
-                properties.content = document.getElementById('text-content').value;
+                const textContent = document.getElementById('text-content');
+                if (textContent) {
+                    properties.content = textContent.value;
+                }
                 break;
             case 'button':
-                properties.text = document.getElementById('button-text').value;
-                properties.url = document.getElementById('button-url').value;
+                const buttonText = document.getElementById('button-text');
+                const buttonUrl = document.getElementById('button-url');
+                const buttonStyle = document.getElementById('button-style');
+                if (buttonText && buttonUrl && buttonStyle) {
+                    properties.text = buttonText.value;
+                    properties.url = buttonUrl.value;
+                    properties.style = buttonStyle.value;
+                }
                 break;
             case 'image':
-                properties.src = document.getElementById('image-src').value;
-                properties.alt = document.getElementById('image-alt').value;
+                const imageSrc = document.getElementById('image-src');
+                const imageAlt = document.getElementById('image-alt');
+                const imageWidth = document.getElementById('image-width');
+                const imageHeight = document.getElementById('image-height');
+                if (imageSrc && imageAlt && imageWidth && imageHeight) {
+                    properties.src = imageSrc.value;
+                    properties.alt = imageAlt.value;
+                    properties.width = imageWidth.value;
+                    properties.height = imageHeight.value;
+                }
                 break;
             case 'link':
-                properties.text = document.getElementById('link-text').value;
-                properties.url = document.getElementById('link-url').value;
+                const linkText = document.getElementById('link-text');
+                const linkUrl = document.getElementById('link-url');
+                const linkTarget = document.getElementById('link-target');
+                if (linkText && linkUrl && linkTarget) {
+                    properties.text = linkText.value;
+                    properties.url = linkUrl.value;
+                    properties.target = linkTarget.value;
+                }
+                break;
+            case 'divider':
+                const dividerStyle = document.getElementById('divider-style');
+                const dividerColor = document.getElementById('divider-color');
+                const dividerThickness = document.getElementById('divider-thickness');
+                if (dividerStyle && dividerColor && dividerThickness) {
+                    properties.style = dividerStyle.value;
+                    properties.color = dividerColor.value;
+                    properties.thickness = dividerThickness.value;
+                }
                 break;
         }
         
@@ -489,31 +778,51 @@
             })
         })
         .then(response => {
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Received non-JSON response');
+            }
+            
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
             return response.json();
         })
         .then(data => {
+            // Validasi data
+            if (!data || !data.id) {
+                throw new Error('Invalid response data');
+            }
+            
             // Update the component in the DOM
             updateComponentInDOM(data);
             closePropertiesPanel();
         })
         .catch(error => {
             console.error('Error updating component:', error);
-            alert('Error updating component. Please try again.');
+            showToast('Error updating component. Please try again.', 'error');
         });
     }
     
     function updateComponentInDOM(component) {
+        // Validasi parameter
+        if (!component || !component.id) {
+            console.error('Invalid component data:', component);
+            showToast('Invalid component data. Please try again.', 'error');
+            return;
+        }
+        
         const componentElement = document.querySelector(`.component-wrapper[data-id="${component.id}"]`);
         if (!componentElement) {
             console.error('Component element not found for ID:', component.id);
+            showToast('Component not found. Please try again.', 'error');
             return;
         }
         
         // Update the properties data attribute
         componentElement.dataset.properties = JSON.stringify(component.properties);
+        componentElement.dataset.type = component.type;
         
         // Update the component content
         const contentElement = componentElement.querySelector('.component-content');
@@ -523,25 +832,46 @@
                     contentElement.innerHTML = `<div class="text-content">${component.properties.content || ''}</div>`;
                     break;
                 case 'button':
-                    contentElement.innerHTML = `<a href="${component.properties.url || '#'}" class="px-4 py-2 bg-primary text-white rounded-lg block text-center">${component.properties.text || 'Button'}</a>`;
+                    // Tambahkan penanganan style button
+                    const buttonStyle = component.properties.style === 'secondary' ? 'bg-gray-500 hover:bg-gray-600' : 'bg-primary hover:bg-primary-dark';
+                    contentElement.innerHTML = `<a href="${component.properties.url || '#'}" class="px-4 py-2 ${buttonStyle} text-white rounded-lg block text-center">${component.properties.text || 'Button'}</a>`;
                     break;
                 case 'image':
-                    contentElement.innerHTML = `<img src="${component.properties.src || 'https://placehold.co/400x200'}" alt="${component.properties.alt || 'Image'}" class="max-w-full h-auto rounded">`;
+                    // Tambahkan penanganan width dan height
+                    const width = component.properties.width || '100%';
+                    const height = component.properties.height || 'auto';
+                    contentElement.innerHTML = `<img src="${component.properties.src || 'https://placehold.co/400x200'}" alt="${component.properties.alt || 'Image'}" style="width: ${width}; height: ${height};" class="rounded">`;
                     break;
                 case 'link':
-                    contentElement.innerHTML = `<a href="${component.properties.url || '#'}" class="text-primary underline">${component.properties.text || 'Link'}</a>`;
+                    // Tambahkan penanganan target
+                    const target = component.properties.target === '_blank' ? 'target="_blank" rel="noopener noreferrer"' : '';
+                    contentElement.innerHTML = `<a href="${component.properties.url || '#'}" ${target} class="text-primary underline">${component.properties.text || 'Link'}</a>`;
                     break;
                 case 'divider':
-                    contentElement.innerHTML = `<hr class="border-gray-300">`;
+                    // Tambahkan penanganan style divider
+                    const thickness = component.properties.thickness || '1px';
+                    const color = component.properties.color || '#e5e7eb';
+                    const style = component.properties.style || 'solid';
+                    contentElement.innerHTML = `<hr style="border: ${thickness} ${style} ${color};">`;
                     break;
                 default:
-                    contentElement.innerHTML = `<div>Unknown component type: ${component.type}</div>`;
+                    // Handle unknown component types gracefully
+                    contentElement.innerHTML = `<div class="text-red-500 p-2">Unknown component type: ${component.type || 'undefined'}</div>`;
+                    console.warn('Unknown component type:', component.type);
+                    // Don't show error toast for unknown types to avoid confusion
             }
         }
+        
+        showToast('Component updated successfully!', 'success');
     }
     
     function deleteComponent(componentId) {
-        if (!confirm('Are you sure you want to delete this component?')) return;
+        // Validasi parameter
+        if (!componentId) {
+            console.error('Invalid component ID');
+            showToast('Invalid component ID. Please try again.', 'error');
+            return;
+        }
         
         // Remove from server
         fetch(`/cms/builder/${domainId}/component/${componentId}`, {
@@ -551,6 +881,12 @@
             }
         })
         .then(response => {
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Received non-JSON response');
+            }
+            
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
@@ -561,16 +897,23 @@
             const componentElement = document.querySelector(`.component-wrapper[data-id="${componentId}"]`);
             if (componentElement) {
                 componentElement.remove();
+                showToast('Component deleted successfully!', 'success');
+            } else {
+                // Jika elemen tidak ditemukan, tetap tampilkan pesan sukses
+                showToast('Component deleted successfully!', 'success');
             }
         })
         .catch(error => {
             console.error('Error deleting component:', error);
-            alert('Error deleting component. Please try again.');
+            showToast('Error deleting component. Please try again.', 'error');
         });
     }
     
     function closePropertiesPanel() {
-        document.getElementById('properties-panel').classList.add('hidden');
+        const propertiesPanel = document.getElementById('properties-panel');
+        if (propertiesPanel) {
+            propertiesPanel.classList.add('hidden');
+        }
         currentComponentId = null;
         currentComponentType = null;
     }
@@ -603,18 +946,60 @@
             document.getElementById('preview-modal').classList.add('flex');
         } catch (error) {
             console.error('Error generating preview:', error);
-            alert('Error generating preview. Please try again.');
+            showToast('Error generating preview. Please try again.', 'error');
         }
     }
     
     function closePreview() {
-        document.getElementById('preview-modal').classList.add('hidden');
-        document.getElementById('preview-modal').classList.remove('flex');
+        const previewModal = document.getElementById('preview-modal');
+        if (previewModal) {
+            previewModal.classList.add('hidden');
+            previewModal.classList.remove('flex');
+        }
+    }
+
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toast-message');
+        const icon = toast.querySelector('svg');
+        const wrapper = toast.querySelector('.flex');
+        
+        // Validasi elemen
+        if (!toast || !toastMessage || !icon || !wrapper) {
+            console.error('Toast elements not found');
+            return;
+        }
+        
+        // Reset classes
+        wrapper.className = 'flex items-center p-4 text-sm rounded-lg shadow-lg min-w-[300px] max-w-md';
+        icon.innerHTML = '';
+        
+        // Set style based on type
+        if (type === 'success') {
+            wrapper.classList.add('bg-green-50', 'text-green-800');
+            icon.innerHTML = '<path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>';
+        } else if (type === 'error') {
+            wrapper.classList.add('bg-red-50', 'text-red-800');
+            icon.innerHTML = '<path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 11.793a1 1 0 1 1-1.414 1.414L10 11.414l-2.293 2.293a1 1 0 0 1-1.414-1.414L8.586 10 6.293 7.707a1 1 0 0 1 1.414-1.414L10 8.586l2.293 2.293a1 1 0 0 1 1.414 1.414L11.414 10l2.293 2.293Z"/>';
+        }
+        
+        toastMessage.textContent = message;
+        toast.classList.remove('translate-x-full');
+        toast.classList.add('translate-x-0');
+        
+        // Auto hide after 3 seconds
+        setTimeout(hideToast, 3000);
+    }
+
+    function hideToast() {
+        const toast = document.getElementById('toast');
+        if (toast) {
+            toast.classList.remove('translate-x-0');
+            toast.classList.add('translate-x-full');
+        }
     }
     
     function publishPage() {
-        if (!confirm('Are you sure you want to publish your changes?')) return;
-        
         fetch(`/cms/builder/${domainId}/publish`, {
             method: 'POST',
             headers: {
@@ -622,18 +1007,114 @@
             }
         })
         .then(response => {
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Received non-JSON response');
+            }
+            
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
             return response.json();
         })
         .then(data => {
-            alert('Page published successfully!');
+            // Validasi response
+            if (data && data.message) {
+                showToast('Page published successfully!', 'success');
+            } else {
+                showToast('Page published successfully!', 'success');
+            }
         })
         .catch(error => {
             console.error('Error publishing page:', error);
-            alert('Error publishing page. Please try again.');
+            showToast('Error publishing page. Please try again.', 'error');
         });
+    }
+    
+    // Component reordering functions
+    // Note: These functions are deprecated as we're now using SortableJS
+    // let draggedComponent = null;
+    
+    // function componentDragStart(e) {
+    //     // Deprecated - using SortableJS instead
+    // }
+    
+    // function componentDragOver(e) {
+    //     // Deprecated - using SortableJS instead
+    // }
+    
+    // function componentDragEnter(e) {
+    //     // Deprecated - using SortableJS instead
+    // }
+    
+    // function componentDragLeave(e) {
+    //     // Deprecated - using SortableJS instead
+    // }
+    
+    // function componentDrop(e) {
+    //     // Deprecated - using SortableJS instead
+    // }
+    
+    // function componentDragEnd(e) {
+    //     // Deprecated - using SortableJS instead
+    // }
+    
+    function reorderComponents() {
+        const canvas = document.getElementById('canvas');
+        const components = Array.from(canvas.children);
+        const componentData = components.map((component, index) => {
+            // Pastikan komponen memiliki ID yang valid
+            const id = component.dataset.id;
+            if (!id) {
+                console.warn('Component without ID found:', component);
+                return null;
+            }
+            
+            // Exclude unsaved components (those with temp IDs)
+            if (id.startsWith('temp_')) {
+                return null;
+            }
+            
+            return {
+                id: id,
+                order: index
+            };
+        }).filter(component => component !== null); // Remove null entries
+        
+        // Hanya kirim request jika ada komponen yang perlu diurutkan
+        if (componentData.length > 0) {
+            fetch(`/cms/builder/${domainId}/reorder`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    components: componentData
+                })
+            })
+            .then(response => {
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Received non-JSON response: ' + response.status + ' ' + response.statusText);
+                }
+                
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.status + ' ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Validasi response
+                showToast('Components reordered successfully!', 'success');
+            })
+            .catch(error => {
+                console.error('Error reordering components:', error);
+                showToast('Error reordering components. Please try again.', 'error');
+            });
+        }
     }
     
     // Reorder components when dragged
