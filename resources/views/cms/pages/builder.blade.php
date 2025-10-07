@@ -31,6 +31,91 @@
     .component-item.dragging {
         opacity: 0.5;
     }
+    
+    /* Resizable image styles */
+    .resizable-image-container {
+        position: relative;
+        display: inline-block;
+        min-width: 50px;
+        min-height: 50px;
+    }
+    
+    .resizable-image-element {
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+    
+    .resize-handle {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background-color: #3b82f6;
+        border: 1px solid white;
+        border-radius: 50%;
+        z-index: 10;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        pointer-events: auto;
+    }
+    
+    .component-wrapper:hover .resize-handle,
+    .resizable-image-container:hover .resize-handle,
+    .resizing .resize-handle {
+        opacity: 1;
+    }
+    
+    .resize-handle-nw {
+        top: -5px;
+        left: -5px;
+        cursor: nw-resize;
+    }
+    
+    .resize-handle-ne {
+        top: -5px;
+        right: -5px;
+        cursor: ne-resize;
+    }
+    
+    .resize-handle-sw {
+        bottom: -5px;
+        left: -5px;
+        cursor: sw-resize;
+    }
+    
+    .resize-handle-se {
+        bottom: -5px;
+        right: -5px;
+        cursor: se-resize;
+    }
+    
+    .resize-handle-n {
+        top: -5px;
+        left: 50%;
+        transform: translateX(-50%);
+        cursor: n-resize;
+    }
+    
+    .resize-handle-s {
+        bottom: -5px;
+        left: 50%;
+        transform: translateX(-50%);
+        cursor: s-resize;
+    }
+    
+    .resize-handle-w {
+        top: 50%;
+        left: -5px;
+        transform: translateY(-50%);
+        cursor: w-resize;
+    }
+    
+    .resize-handle-e {
+        top: 50%;
+        right: -5px;
+        transform: translateY(-50%);
+        cursor: e-resize;
+    }
 </style>
 
 <div id="builder-app" class="flex flex-col h-full">
@@ -143,15 +228,81 @@
                                             </div>
                                             @break
                                         @case('button')
+                                            @php
+                                                // Build button styles
+                                                $buttonClasses = '';
+                                                $buttonStyles = '';
+                                                
+                                                // Add padding classes
+                                                if (isset($component->properties['padding'])) {
+                                                    $buttonClasses .= ' ' . $component->properties['padding'];
+                                                }
+                                                
+                                                // Add font size and weight classes
+                                                if (isset($component->properties['fontSize'])) {
+                                                    $buttonClasses .= ' ' . $component->properties['fontSize'];
+                                                }
+                                                if (isset($component->properties['fontWeight'])) {
+                                                    $buttonClasses .= ' ' . $component->properties['fontWeight'];
+                                                }
+                                                
+                                                // Add border radius classes
+                                                if (isset($component->properties['borderRadius']) && $component->properties['borderRadius'] !== 'none') {
+                                                    $buttonClasses .= ' ' . $component->properties['borderRadius'];
+                                                }
+                                                
+                                                // Add border styles
+                                                if (isset($component->properties['borderWidth']) && $component->properties['borderWidth'] !== '0') {
+                                                    $buttonStyles .= 'border: ' . $component->properties['borderWidth'] . 'px solid ' . ($component->properties['borderColor'] ?? '#00c499') . ';';
+                                                }
+                                                
+                                                // Add background and text color styles
+                                                $buttonStyles .= 'background-color: ' . ($component->properties['backgroundColor'] ?? '#00c499') . ';';
+                                                $buttonStyles .= 'color: ' . ($component->properties['textColor'] ?? '#ffffff') . ';';
+                                            @endphp
                                             <a href="{{ $component->properties['url'] ?? '#' }}" 
-                                               class="px-4 py-2 bg-primary text-white rounded-lg block text-center">
+                                               class="{{ trim($buttonClasses) }}"
+                                               style="{{ $buttonStyles }}">
                                                 {{ $component->properties['text'] ?? 'Button' }}
                                             </a>
                                             @break
+                                        @case('link')
+                                            @php
+                                                // Build link styles
+                                                $linkClasses = '';
+                                                $linkStyles = '';
+                                                
+                                                // Add font size and weight classes
+                                                if (isset($component->properties['fontSize'])) {
+                                                    $linkClasses .= ' ' . $component->properties['fontSize'];
+                                                }
+                                                if (isset($component->properties['fontWeight'])) {
+                                                    $linkClasses .= ' ' . $component->properties['fontWeight'];
+                                                }
+                                                
+                                                // Add text decoration class
+                                                if (isset($component->properties['textDecoration']) && $component->properties['textDecoration'] !== 'no-underline') {
+                                                    $linkClasses .= ' ' . $component->properties['textDecoration'];
+                                                } else if (isset($component->properties['textDecoration']) && $component->properties['textDecoration'] === 'no-underline') {
+                                                    // Remove underline if explicitly set to no-underline
+                                                    $linkClasses .= ' no-underline';
+                                                }
+                                                
+                                                // Add text color style
+                                                $linkStyles .= 'color: ' . ($component->properties['textColor'] ?? '#00c499') . ';';
+                                            @endphp
+                                            <a href="{{ $component->properties['url'] ?? '#' }}" 
+                                               class="{{ trim($linkClasses) }}"
+                                               style="{{ $linkStyles }}">
+                                                {{ $component->properties['text'] ?? 'Link text' }}
+                                            </a>
+                                            @break
                                         @case('image')
-                                            <img src="{{ $component->properties['src'] ?? 'https://placehold.co/400x200' }}" 
-                                                 alt="{{ $component->properties['alt'] ?? 'Image' }}" 
-                                                 class="max-w-full h-auto rounded">
+                                            <div class="resizable-image-container" style="position: relative; display: inline-block; width: {{ $component->properties['width'] ?? '100%' }}; height: {{ $component->properties['height'] ?? 'auto' }};">
+                                                <img src="{{ $component->properties['src'] ?? 'https://placehold.co/400x200' }}" 
+                                                     alt="{{ $component->properties['alt'] ?? 'Image' }}" 
+                                                     class="resizable-image-element" style="width: 100%; height: 100%; display: block;">
+                                            </div>
                                             @break
                                         @case('link')
                                             <a href="{{ $component->properties['url'] ?? '#' }}" 
@@ -277,6 +428,13 @@
         } else {
             console.warn('SortableJS not loaded or canvas not found');
         }
+        
+        // Initialize resize handles for existing image components
+        setTimeout(() => {
+            document.querySelectorAll('.component-wrapper[data-type="image"]').forEach(component => {
+                addResizeHandles(component);
+            });
+        }, 100);
     });
     
     function dragStart(e) {
@@ -394,7 +552,9 @@
                 break;
             case 'image':
                 componentHtml = `
-                    <img src="https://placehold.co/400x200" alt="Image" class="max-w-full h-auto rounded">
+                    <div class="resizable-image-container" style="position: relative; display: inline-block; width: 100%; height: auto;">
+                        <img src="https://placehold.co/400x200" alt="Image" class="resizable-image-element" style="width: 100%; height: 100%; display: block;">
+                    </div>
                 `;
                 break;
             case 'link':
@@ -436,6 +596,11 @@
         `;
         
         document.getElementById('canvas').appendChild(componentWrapper);
+        
+        // Add resize handles for image components
+        if (type === 'image') {
+            addResizeHandles(componentWrapper);
+        }
         
         // Save component to server
         saveComponent(type, componentWrapper);
@@ -537,7 +702,14 @@
                 return { 
                     text: 'Button Text', 
                     url: '#',
-                    style: 'primary'
+                    backgroundColor: '#00c499',
+                    textColor: '#ffffff',
+                    borderColor: '#00c499',
+                    borderWidth: '0',
+                    borderRadius: '0.5rem',
+                    padding: 'px-4 py-2',
+                    fontSize: 'text-base',
+                    fontWeight: 'font-normal'
                 };
             case 'image':
                 return { 
@@ -550,7 +722,11 @@
                 return { 
                     text: 'Link text', 
                     url: '#',
-                    target: '_blank'
+                    target: '_blank',
+                    textColor: '#00c499',
+                    fontSize: 'text-base',
+                    fontWeight: 'font-normal',
+                    textDecoration: 'underline'
                 };
             case 'divider':
                 return {
@@ -675,10 +851,73 @@
                             <input type="text" id="button-url" value="${properties.url || ''}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Style</label>
-                            <select id="button-style" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
-                                <option value="primary" ${properties.style === 'primary' ? 'selected' : ''}>Primary</option>
-                                <option value="secondary" ${properties.style === 'secondary' ? 'selected' : ''}>Secondary</option>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Background Color</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" id="button-bg-color" value="${properties.backgroundColor || '#00c499'}" class="w-10 h-10 border border-gray-300 rounded cursor-pointer">
+                                <input type="text" id="button-bg-color-value" value="${properties.backgroundColor || '#00c499'}" class="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Text Color</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" id="button-text-color" value="${properties.textColor || '#ffffff'}" class="w-10 h-10 border border-gray-300 rounded cursor-pointer">
+                                <input type="text" id="button-text-color-value" value="${properties.textColor || '#ffffff'}" class="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Border Color</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" id="button-border-color" value="${properties.borderColor || '#00c499'}" class="w-10 h-10 border border-gray-300 rounded cursor-pointer">
+                                <input type="text" id="button-border-color-value" value="${properties.borderColor || '#00c499'}" class="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Border Width</label>
+                            <select id="button-border-width" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option value="0" ${properties.borderWidth === '0' ? 'selected' : ''}>None</option>
+                                <option value="1" ${properties.borderWidth === '1' ? 'selected' : ''}>1px</option>
+                                <option value="2" ${properties.borderWidth === '2' ? 'selected' : ''}>2px</option>
+                                <option value="4" ${properties.borderWidth === '4' ? 'selected' : ''}>4px</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Border Radius</label>
+                            <select id="button-border-radius" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option value="none" ${properties.borderRadius === 'none' ? 'selected' : ''}>None</option>
+                                <option value="rounded" ${properties.borderRadius === 'rounded' ? 'selected' : ''}>Small</option>
+                                <option value="rounded-md" ${properties.borderRadius === 'rounded-md' ? 'selected' : ''}>Medium</option>
+                                <option value="rounded-lg" ${properties.borderRadius === 'rounded-lg' ? 'selected' : ''}>Large</option>
+                                <option value="rounded-full" ${properties.borderRadius === 'rounded-full' ? 'selected' : ''}>Full</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Padding</label>
+                            <select id="button-padding" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option value="px-2 py-1" ${properties.padding === 'px-2 py-1' ? 'selected' : ''}>Small</option>
+                                <option value="px-4 py-2" ${properties.padding === 'px-4 py-2' ? 'selected' : ''}>Medium</option>
+                                <option value="px-6 py-3" ${properties.padding === 'px-6 py-3' ? 'selected' : ''}>Large</option>
+                                <option value="px-8 py-4" ${properties.padding === 'px-8 py-4' ? 'selected' : ''}>Extra Large</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Font Size</label>
+                            <select id="button-font-size" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option value="text-xs" ${properties.fontSize === 'text-xs' ? 'selected' : ''}>Extra Small</option>
+                                <option value="text-sm" ${properties.fontSize === 'text-sm' ? 'selected' : ''}>Small</option>
+                                <option value="text-base" ${properties.fontSize === 'text-base' ? 'selected' : ''}>Base</option>
+                                <option value="text-lg" ${properties.fontSize === 'text-lg' ? 'selected' : ''}>Large</option>
+                                <option value="text-xl" ${properties.fontSize === 'text-xl' ? 'selected' : ''}>Extra Large</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Font Weight</label>
+                            <select id="button-font-weight" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option value="font-thin" ${properties.fontWeight === 'font-thin' ? 'selected' : ''}>Thin</option>
+                                <option value="font-light" ${properties.fontWeight === 'font-light' ? 'selected' : ''}>Light</option>
+                                <option value="font-normal" ${properties.fontWeight === 'font-normal' ? 'selected' : ''}>Normal</option>
+                                <option value="font-medium" ${properties.fontWeight === 'font-medium' ? 'selected' : ''}>Medium</option>
+                                <option value="font-semibold" ${properties.fontWeight === 'font-semibold' ? 'selected' : ''}>Semi Bold</option>
+                                <option value="font-bold" ${properties.fontWeight === 'font-bold' ? 'selected' : ''}>Bold</option>
                             </select>
                         </div>
                         <button onclick="saveComponentProperties()" class="w-full bg-primary hover:bg-primary-dark text-white py-2 rounded-lg">
@@ -758,6 +997,43 @@
                                 <option value="_blank" ${properties.target === '_blank' ? 'selected' : ''}>New Window</option>
                             </select>
                         </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Text Color</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" id="link-text-color" value="${properties.textColor || '#00c499'}" class="w-10 h-10 border border-gray-300 rounded cursor-pointer">
+                                <input type="text" id="link-text-color-value" value="${properties.textColor || '#00c499'}" class="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Font Size</label>
+                            <select id="link-font-size" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option value="text-xs" ${properties.fontSize === 'text-xs' ? 'selected' : ''}>Extra Small</option>
+                                <option value="text-sm" ${properties.fontSize === 'text-sm' ? 'selected' : ''}>Small</option>
+                                <option value="text-base" ${properties.fontSize === 'text-base' ? 'selected' : ''}>Base</option>
+                                <option value="text-lg" ${properties.fontSize === 'text-lg' ? 'selected' : ''}>Large</option>
+                                <option value="text-xl" ${properties.fontSize === 'text-xl' ? 'selected' : ''}>Extra Large</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Font Weight</label>
+                            <select id="link-font-weight" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option value="font-thin" ${properties.fontWeight === 'font-thin' ? 'selected' : ''}>Thin</option>
+                                <option value="font-light" ${properties.fontWeight === 'font-light' ? 'selected' : ''}>Light</option>
+                                <option value="font-normal" ${properties.fontWeight === 'font-normal' ? 'selected' : ''}>Normal</option>
+                                <option value="font-medium" ${properties.fontWeight === 'font-medium' ? 'selected' : ''}>Medium</option>
+                                <option value="font-semibold" ${properties.fontWeight === 'font-semibold' ? 'selected' : ''}>Semi Bold</option>
+                                <option value="font-bold" ${properties.fontWeight === 'font-bold' ? 'selected' : ''}>Bold</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Text Decoration</label>
+                            <select id="link-text-decoration" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option value="no-underline" ${properties.textDecoration === 'no-underline' ? 'selected' : ''}>None</option>
+                                <option value="underline" ${properties.textDecoration === 'underline' ? 'selected' : ''}>Underline</option>
+                                <option value="overline" ${properties.textDecoration === 'overline' ? 'selected' : ''}>Overline</option>
+                                <option value="line-through" ${properties.textDecoration === 'line-through' ? 'selected' : ''}>Line Through</option>
+                            </select>
+                        </div>
                         <button onclick="saveComponentProperties()" class="w-full bg-primary hover:bg-primary-dark text-white py-2 rounded-lg">
                             Save Changes
                         </button>
@@ -794,6 +1070,240 @@
         }
         
         propertiesContent.innerHTML = html;
+        
+        // Add real-time preview functionality
+        addRealTimePreviewListeners(component);
+    }
+    
+    function addRealTimePreviewListeners(component) {
+        // Add event listeners for real-time preview updates
+        const inputs = document.querySelectorAll('#properties-content input, #properties-content select, #properties-content textarea');
+        inputs.forEach(input => {
+            // For color inputs, we need to listen to both input and change events
+            if (input.type === 'color') {
+                input.addEventListener('input', () => updatePreview(component));
+                input.addEventListener('change', () => updatePreview(component));
+            } else {
+                input.addEventListener('input', () => updatePreview(component));
+            }
+        });
+    }
+    
+    function updatePreview(component) {
+        // Get current property values from the form
+        const properties = getCurrentPropertyValues();
+        
+        // Update the component preview in real-time
+        updateComponentPreview(component, properties);
+    }
+    
+    function getCurrentPropertyValues() {
+        const properties = {};
+        
+        // Text component properties
+        const textContent = document.getElementById('text-content');
+        const textAlignment = document.getElementById('text-alignment');
+        const textSize = document.getElementById('text-size');
+        const textBold = document.getElementById('text-bold');
+        const textItalic = document.getElementById('text-italic');
+        const textUnderline = document.getElementById('text-underline');
+        
+        if (textContent) properties.content = textContent.value;
+        if (textAlignment) properties.alignment = textAlignment.value;
+        if (textSize) properties.size = textSize.value;
+        if (textBold) properties.bold = textBold.checked;
+        if (textItalic) properties.italic = textItalic.checked;
+        if (textUnderline) properties.underline = textUnderline.checked;
+        
+        // Button component properties
+        const buttonText = document.getElementById('button-text');
+        const buttonUrl = document.getElementById('button-url');
+        const buttonBgColor = document.getElementById('button-bg-color');
+        const buttonBgColorValue = document.getElementById('button-bg-color-value');
+        const buttonTextColor = document.getElementById('button-text-color');
+        const buttonTextColorValue = document.getElementById('button-text-color-value');
+        const buttonBorderColor = document.getElementById('button-border-color');
+        const buttonBorderColorValue = document.getElementById('button-border-color-value');
+        const buttonBorderWidth = document.getElementById('button-border-width');
+        const buttonBorderRadius = document.getElementById('button-border-radius');
+        const buttonPadding = document.getElementById('button-padding');
+        const buttonFontSize = document.getElementById('button-font-size');
+        const buttonFontWeight = document.getElementById('button-font-weight');
+        
+        if (buttonText) properties.text = buttonText.value;
+        if (buttonUrl) properties.url = buttonUrl.value;
+        if (buttonBgColor) properties.backgroundColor = buttonBgColor.value;
+        if (buttonBgColorValue) properties.backgroundColor = buttonBgColorValue.value;
+        if (buttonTextColor) properties.textColor = buttonTextColor.value;
+        if (buttonTextColorValue) properties.textColor = buttonTextColorValue.value;
+        if (buttonBorderColor) properties.borderColor = buttonBorderColor.value;
+        if (buttonBorderColorValue) properties.borderColor = buttonBorderColorValue.value;
+        if (buttonBorderWidth) properties.borderWidth = buttonBorderWidth.value;
+        if (buttonBorderRadius) properties.borderRadius = buttonBorderRadius.value;
+        if (buttonPadding) properties.padding = buttonPadding.value;
+        if (buttonFontSize) properties.fontSize = buttonFontSize.value;
+        if (buttonFontWeight) properties.fontWeight = buttonFontWeight.value;
+        
+        // Image component properties
+        const imageSrc = document.getElementById('image-src');
+        const imageAlt = document.getElementById('image-alt');
+        const imageWidth = document.getElementById('image-width');
+        const imageHeight = document.getElementById('image-height');
+        
+        if (imageSrc) properties.src = imageSrc.value;
+        if (imageAlt) properties.alt = imageAlt.value;
+        if (imageWidth) properties.width = imageWidth.value;
+        if (imageHeight) properties.height = imageHeight.value;
+        
+        // Link component properties
+        const linkText = document.getElementById('link-text');
+        const linkUrl = document.getElementById('link-url');
+        const linkTarget = document.getElementById('link-target');
+        const linkTextColor = document.getElementById('link-text-color');
+        const linkTextColorValue = document.getElementById('link-text-color-value');
+        const linkFontSize = document.getElementById('link-font-size');
+        const linkFontWeight = document.getElementById('link-font-weight');
+        const linkTextDecoration = document.getElementById('link-text-decoration');
+        
+        if (linkText) properties.text = linkText.value;
+        if (linkUrl) properties.url = linkUrl.value;
+        if (linkTarget) properties.target = linkTarget.value;
+        if (linkTextColor) properties.textColor = linkTextColor.value;
+        if (linkTextColorValue) properties.textColor = linkTextColorValue.value;
+        if (linkFontSize) properties.fontSize = linkFontSize.value;
+        if (linkFontWeight) properties.fontWeight = linkFontWeight.value;
+        if (linkTextDecoration) properties.textDecoration = linkTextDecoration.value;
+        
+        // Divider component properties
+        const dividerStyle = document.getElementById('divider-style');
+        const dividerColor = document.getElementById('divider-color');
+        const dividerThickness = document.getElementById('divider-thickness');
+        
+        if (dividerStyle) properties.style = dividerStyle.value;
+        if (dividerColor) properties.color = dividerColor.value;
+        if (dividerThickness) properties.thickness = dividerThickness.value;
+        
+        return properties;
+    }
+    
+    function updateComponentPreview(component, properties) {
+        // Update the component preview without saving to server
+        const componentElement = document.querySelector(`.component-wrapper[data-id="${component.dataset.id}"]`);
+        if (!componentElement) return;
+        
+        const contentElement = componentElement.querySelector('.component-content');
+        if (!contentElement) return;
+        
+        switch(component.dataset.type) {
+            case 'text':
+                // Build CSS classes for text formatting
+                let textClasses = '';
+                if (properties.alignment) {
+                    textClasses += ` text-${properties.alignment}`;
+                }
+                if (properties.size) {
+                    textClasses += ` ${properties.size}`;
+                }
+                if (properties.bold) {
+                    textClasses += ' font-bold';
+                }
+                if (properties.italic) {
+                    textClasses += ' italic';
+                }
+                if (properties.underline) {
+                    textClasses += ' underline';
+                }
+                
+                contentElement.innerHTML = `<div class="text-content${textClasses}">${properties.content || ''}</div>`;
+                break;
+            case 'button':
+                // Build button styles
+                let buttonClasses = '';
+                let buttonStyles = '';
+                
+                // Add padding classes
+                if (properties.padding) {
+                    buttonClasses += ` ${properties.padding}`;
+                }
+                
+                // Add font size and weight classes
+                if (properties.fontSize) {
+                    buttonClasses += ` ${properties.fontSize}`;
+                }
+                if (properties.fontWeight) {
+                    buttonClasses += ` ${properties.fontWeight}`;
+                }
+                
+                // Add border radius classes
+                if (properties.borderRadius && properties.borderRadius !== 'none') {
+                    buttonClasses += ` ${properties.borderRadius}`;
+                }
+                
+                // Add border styles
+                if (properties.borderWidth && properties.borderWidth !== '0') {
+                    buttonStyles += `border: ${properties.borderWidth}px solid ${properties.borderColor || '#00c499'};`;
+                }
+                
+                // Add background and text color styles
+                buttonStyles += `background-color: ${properties.backgroundColor || '#00c499'};`;
+                buttonStyles += `color: ${properties.textColor || '#ffffff'};`;
+                
+                contentElement.innerHTML = `<a href="${properties.url || '#'}" class="${buttonClasses}" style="${buttonStyles}">${properties.text || 'Button'}</a>`;
+                break;
+            case 'image':
+                // Tambahkan penanganan width dan height
+                const width = properties.width || '100%';
+                const height = properties.height || 'auto';
+                contentElement.innerHTML = `
+                    <div class="resizable-image-container" style="position: relative; display: inline-block; width: ${width}; height: ${height};">
+                        <img src="${properties.src || 'https://placehold.co/400x200'}" alt="${properties.alt || 'Image'}" class="resizable-image-element" style="width: 100%; height: 100%; display: block;">
+                    </div>
+                `;
+                // Add resize handles
+                setTimeout(() => {
+                    const componentElement = contentElement.closest('.component-wrapper');
+                    if (componentElement) {
+                        addResizeHandles(componentElement);
+                    }
+                }, 0);
+                break;
+            case 'link':
+                // Tambahkan penanganan target
+                const target = properties.target === '_blank' ? 'target="_blank" rel="noopener noreferrer"' : '';
+                
+                // Build link styles
+                let linkClasses = '';
+                let linkStyles = '';
+                
+                // Add font size and weight classes
+                if (properties.fontSize) {
+                    linkClasses += ` ${properties.fontSize}`;
+                }
+                if (properties.fontWeight) {
+                    linkClasses += ` ${properties.fontWeight}`;
+                }
+                
+                // Add text decoration class
+                if (properties.textDecoration && properties.textDecoration !== 'no-underline') {
+                    linkClasses += ` ${properties.textDecoration}`;
+                } else if (properties.textDecoration === 'no-underline') {
+                    // Remove underline if explicitly set to no-underline
+                    linkClasses += ' no-underline';
+                }
+                
+                // Add text color style
+                linkStyles += `color: ${properties.textColor || '#00c499'};`;
+                
+                contentElement.innerHTML = `<a href="${properties.url || '#'}" ${target} class="${linkClasses}" style="${linkStyles}">${properties.text || 'Link'}</a>`;
+                break;
+            case 'divider':
+                // Tambahkan penanganan style divider
+                const thickness = properties.thickness || '1px';
+                const color = properties.color || '#e5e7eb';
+                const style = properties.style || 'solid';
+                contentElement.innerHTML = `<hr style="border: ${thickness} ${style} ${color};">`;
+                break;
+        }
     }
     
     function saveComponentProperties() {
@@ -803,69 +1313,13 @@
             return;
         }
         
-        let properties = {};
+        // Get current property values (including any changes made in real-time preview)
+        let properties = getCurrentPropertyValues();
         
-        switch(currentComponentType) {
-            case 'text':
-                const textContent = document.getElementById('text-content');
-                if (textContent) {
-                    properties.content = textContent.value;
-                }
-                // Add new text properties
-                const textAlignment = document.getElementById('text-alignment');
-                const textSize = document.getElementById('text-size');
-                const textBold = document.getElementById('text-bold');
-                const textItalic = document.getElementById('text-italic');
-                const textUnderline = document.getElementById('text-underline');
-                
-                if (textAlignment) properties.alignment = textAlignment.value;
-                if (textSize) properties.size = textSize.value;
-                if (textBold) properties.bold = textBold.checked;
-                if (textItalic) properties.italic = textItalic.checked;
-                if (textUnderline) properties.underline = textUnderline.checked;
-                break;
-            case 'button':
-                const buttonText = document.getElementById('button-text');
-                const buttonUrl = document.getElementById('button-url');
-                const buttonStyle = document.getElementById('button-style');
-                if (buttonText && buttonUrl && buttonStyle) {
-                    properties.text = buttonText.value;
-                    properties.url = buttonUrl.value;
-                    properties.style = buttonStyle.value;
-                }
-                break;
-            case 'image':
-                const imageSrc = document.getElementById('image-src');
-                const imageAlt = document.getElementById('image-alt');
-                const imageWidth = document.getElementById('image-width');
-                const imageHeight = document.getElementById('image-height');
-                if (imageSrc && imageAlt && imageWidth && imageHeight) {
-                    properties.src = imageSrc.value;
-                    properties.alt = imageAlt.value;
-                    properties.width = imageWidth.value;
-                    properties.height = imageHeight.value;
-                }
-                break;
-            case 'link':
-                const linkText = document.getElementById('link-text');
-                const linkUrl = document.getElementById('link-url');
-                const linkTarget = document.getElementById('link-target');
-                if (linkText && linkUrl && linkTarget) {
-                    properties.text = linkText.value;
-                    properties.url = linkUrl.value;
-                    properties.target = linkTarget.value;
-                }
-                break;
-            case 'divider':
-                const dividerStyle = document.getElementById('divider-style');
-                const dividerColor = document.getElementById('divider-color');
-                const dividerThickness = document.getElementById('divider-thickness');
-                if (dividerStyle && dividerColor && dividerThickness) {
-                    properties.style = dividerStyle.value;
-                    properties.color = dividerColor.value;
-                    properties.thickness = dividerThickness.value;
-                }
-                break;
+        // Update the component element's data-properties attribute
+        const componentElement = document.querySelector(`.component-wrapper[data-id="${currentComponentId}"]`);
+        if (componentElement) {
+            componentElement.dataset.properties = JSON.stringify(properties);
         }
         
         // Update the component on the server
@@ -953,20 +1407,82 @@
                     contentElement.innerHTML = `<div class="text-content${textClasses}">${component.properties.content || ''}</div>`;
                     break;
                 case 'button':
-                    // Tambahkan penanganan style button
-                    const buttonStyle = component.properties.style === 'secondary' ? 'bg-gray-500 hover:bg-gray-600' : 'bg-primary hover:bg-primary-dark';
-                    contentElement.innerHTML = `<a href="${component.properties.url || '#'}" class="px-4 py-2 ${buttonStyle} text-white rounded-lg block text-center">${component.properties.text || 'Button'}</a>`;
+                    // Build button styles
+                    let buttonClasses = '';
+                    let buttonStyles = '';
+                    
+                    // Add padding classes
+                    if (component.properties.padding) {
+                        buttonClasses += ` ${component.properties.padding}`;
+                    }
+                    
+                    // Add font size and weight classes
+                    if (component.properties.fontSize) {
+                        buttonClasses += ` ${component.properties.fontSize}`;
+                    }
+                    if (component.properties.fontWeight) {
+                        buttonClasses += ` ${component.properties.fontWeight}`;
+                    }
+                    
+                    // Add border radius classes
+                    if (component.properties.borderRadius && component.properties.borderRadius !== 'none') {
+                        buttonClasses += ` ${component.properties.borderRadius}`;
+                    }
+                    
+                    // Add border styles
+                    if (component.properties.borderWidth && component.properties.borderWidth !== '0') {
+                        buttonStyles += `border: ${component.properties.borderWidth}px solid ${component.properties.borderColor || '#00c499'};`;
+                    }
+                    
+                    // Add background and text color styles
+                    buttonStyles += `background-color: ${component.properties.backgroundColor || '#00c499'};`;
+                    buttonStyles += `color: ${component.properties.textColor || '#ffffff'};`;
+                    
+                    contentElement.innerHTML = `<a href="${component.properties.url || '#'}" class="${buttonClasses}" style="${buttonStyles}">${component.properties.text || 'Button'}</a>`;
                     break;
                 case 'image':
                     // Tambahkan penanganan width dan height
                     const width = component.properties.width || '100%';
                     const height = component.properties.height || 'auto';
-                    contentElement.innerHTML = `<img src="${component.properties.src || 'https://placehold.co/400x200'}" alt="${component.properties.alt || 'Image'}" style="width: ${width}; height: ${height};" class="rounded">`;
+                    contentElement.innerHTML = `
+                        <div class="resizable-image-container" style="position: relative; display: inline-block; width: ${width}; height: ${height};">
+                            <img src="${component.properties.src || 'https://placehold.co/400x200'}" alt="${component.properties.alt || 'Image'}" class="resizable-image-element" style="width: 100%; height: 100%; display: block;">
+                            <!-- Resize handles will be added dynamically -->
+                        </div>
+                    `;
+                    // Add resize handles
+                    setTimeout(() => {
+                        addResizeHandles(componentElement);
+                    }, 0);
                     break;
                 case 'link':
                     // Tambahkan penanganan target
                     const target = component.properties.target === '_blank' ? 'target="_blank" rel="noopener noreferrer"' : '';
-                    contentElement.innerHTML = `<a href="${component.properties.url || '#'}" ${target} class="text-primary underline">${component.properties.text || 'Link'}</a>`;
+                    
+                    // Build link styles
+                    let linkClasses = '';
+                    let linkStyles = '';
+                    
+                    // Add font size and weight classes
+                    if (component.properties.fontSize) {
+                        linkClasses += ` ${component.properties.fontSize}`;
+                    }
+                    if (component.properties.fontWeight) {
+                        linkClasses += ` ${component.properties.fontWeight}`;
+                    }
+                    
+                    // Add text decoration class
+                    if (component.properties.textDecoration && component.properties.textDecoration !== 'no-underline') {
+                        linkClasses += ` ${component.properties.textDecoration}`;
+                    } else if (component.properties.textDecoration === 'no-underline') {
+                        // Remove underline if explicitly set to no-underline
+                        linkClasses += ' no-underline';
+                    }
+                    
+                    // Add text color style
+                    linkStyles += `color: ${component.properties.textColor || '#00c499'};`;
+                    
+                    contentElement.innerHTML = `<a href="${component.properties.url || '#'}" ${target} class="${linkClasses}" style="${linkStyles}">${component.properties.text || 'Link'}</a>`;
                     break;
                 case 'divider':
                     // Tambahkan penanganan style divider
@@ -1345,6 +1861,191 @@
                 }
             }
         });
+        
+        // Add event listeners for color pickers
+        document.addEventListener('input', function(e) {
+            // Button background color synchronization
+            if (e.target && e.target.id === 'button-bg-color') {
+                document.getElementById('button-bg-color-value').value = e.target.value;
+            } else if (e.target && e.target.id === 'button-bg-color-value') {
+                document.getElementById('button-bg-color').value = e.target.value;
+            }
+            // Button text color synchronization
+            else if (e.target && e.target.id === 'button-text-color') {
+                document.getElementById('button-text-color-value').value = e.target.value;
+            } else if (e.target && e.target.id === 'button-text-color-value') {
+                document.getElementById('button-text-color').value = e.target.value;
+            }
+            // Button border color synchronization
+            else if (e.target && e.target.id === 'button-border-color') {
+                document.getElementById('button-border-color-value').value = e.target.value;
+            } else if (e.target && e.target.id === 'button-border-color-value') {
+                document.getElementById('button-border-color').value = e.target.value;
+            }
+            // Link text color synchronization
+            else if (e.target && e.target.id === 'link-text-color') {
+                document.getElementById('link-text-color-value').value = e.target.value;
+            } else if (e.target && e.target.id === 'link-text-color-value') {
+                document.getElementById('link-text-color').value = e.target.value;
+            }
+        });
     });
+    
+    // Add resize handles to image components
+    function addResizeHandles(componentElement) {
+        const imageContainer = componentElement.querySelector('.resizable-image-container');
+        if (!imageContainer) return;
+        
+        // Remove existing handles if any
+        const existingHandles = imageContainer.querySelectorAll('.resize-handle');
+        existingHandles.forEach(handle => handle.remove());
+        
+        // Create resize handles
+        const handles = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
+        handles.forEach(position => {
+            const handle = document.createElement('div');
+            handle.className = `resize-handle resize-handle-${position}`;
+            handle.dataset.position = position;
+            imageContainer.appendChild(handle);
+        });
+        
+        // Add event listeners for resizing
+        makeResizable(imageContainer);
+    }
+    
+    // Make image container resizable
+    function makeResizable(container) {
+        const handles = container.querySelectorAll('.resize-handle');
+        const image = container.querySelector('img');
+        
+        if (!handles.length || !image) return;
+        
+        let isResizing = false;
+        let currentHandle = null;
+        let startX, startY, startWidth, startHeight, startLeft, startTop;
+        
+        handles.forEach(handle => {
+            handle.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                isResizing = true;
+                currentHandle = handle;
+                
+                startX = e.clientX;
+                startY = e.clientY;
+                startWidth = parseInt(document.defaultView.getComputedStyle(container).width, 10);
+                startHeight = parseInt(document.defaultView.getComputedStyle(container).height, 10);
+                startLeft = container.offsetLeft || 0;
+                startTop = container.offsetTop || 0;
+                
+                // Add temporary class to indicate resizing
+                container.classList.add('resizing');
+                
+                // Disable pointer events on other elements during resizing
+                document.body.style.pointerEvents = 'none';
+                container.style.pointerEvents = 'all';
+                handle.style.pointerEvents = 'all';
+                
+                // Prevent text selection during resize
+                document.body.style.userSelect = 'none';
+            });
+        });
+        
+        document.addEventListener('mousemove', function(e) {
+            if (!isResizing) return;
+            
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            
+            let newWidth = startWidth;
+            let newHeight = startHeight;
+            let newLeft = startLeft;
+            let newTop = startTop;
+            
+            switch(currentHandle.dataset.position) {
+                case 'se':
+                    newWidth = startWidth + dx;
+                    newHeight = startHeight + dy;
+                    break;
+                case 'sw':
+                    newWidth = startWidth - dx;
+                    newHeight = startHeight + dy;
+                    newLeft = startLeft + dx;
+                    break;
+                case 'ne':
+                    newWidth = startWidth + dx;
+                    newHeight = startHeight - dy;
+                    newTop = startTop + dy;
+                    break;
+                case 'nw':
+                    newWidth = startWidth - dx;
+                    newHeight = startHeight - dy;
+                    newLeft = startLeft + dx;
+                    newTop = startTop + dy;
+                    break;
+                case 'n':
+                    newHeight = startHeight - dy;
+                    newTop = startTop + dy;
+                    break;
+                case 's':
+                    newHeight = startHeight + dy;
+                    break;
+                case 'e':
+                    newWidth = startWidth + dx;
+                    break;
+                case 'w':
+                    newWidth = startWidth - dx;
+                    newLeft = startLeft + dx;
+                    break;
+            }
+            
+            // Ensure minimum size
+            newWidth = Math.max(50, newWidth);
+            newHeight = Math.max(50, newHeight);
+            
+            // Apply new dimensions
+            container.style.width = newWidth + 'px';
+            container.style.height = newHeight + 'px';
+            
+            // Only update position if it was initially set
+            if (startLeft !== 0 || startTop !== 0) {
+                container.style.left = newLeft + 'px';
+                container.style.top = newTop + 'px';
+            }
+            
+            // Update image to fit container
+            image.style.width = '100%';
+            image.style.height = '100%';
+        });
+        
+        document.addEventListener('mouseup', function() {
+            if (!isResizing) return;
+            
+            isResizing = false;
+            container.classList.remove('resizing');
+            
+            // Re-enable pointer events
+            document.body.style.pointerEvents = '';
+            document.body.style.userSelect = '';
+            
+            // Update component properties with new dimensions
+            const componentWrapper = container.closest('.component-wrapper');
+            if (componentWrapper) {
+                const properties = JSON.parse(componentWrapper.dataset.properties || '{}');
+                properties.width = container.style.width;
+                properties.height = container.style.height;
+                componentWrapper.dataset.properties = JSON.stringify(properties);
+                
+                // Update width and height inputs in properties panel if it's open
+                if (currentComponentId === componentWrapper.dataset.id) {
+                    const widthInput = document.getElementById('image-width');
+                    const heightInput = document.getElementById('image-height');
+                    if (widthInput) widthInput.value = container.style.width;
+                    if (heightInput) heightInput.value = container.style.height;
+                }
+            }
+        });
+    }
 </script>
 @endsection

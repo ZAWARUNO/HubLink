@@ -42,8 +42,41 @@
                                 </div>
                                 @break
                             @case('button')
+                                @php
+                                    // Build button styles
+                                    $buttonClasses = '';
+                                    $buttonStyles = '';
+                                    
+                                    // Add padding classes
+                                    if (isset($component->properties['padding'])) {
+                                        $buttonClasses .= ' ' . $component->properties['padding'];
+                                    }
+                                    
+                                    // Add font size and weight classes
+                                    if (isset($component->properties['fontSize'])) {
+                                        $buttonClasses .= ' ' . $component->properties['fontSize'];
+                                    }
+                                    if (isset($component->properties['fontWeight'])) {
+                                        $buttonClasses .= ' ' . $component->properties['fontWeight'];
+                                    }
+                                    
+                                    // Add border radius classes
+                                    if (isset($component->properties['borderRadius']) && $component->properties['borderRadius'] !== 'none') {
+                                        $buttonClasses .= ' ' . $component->properties['borderRadius'];
+                                    }
+                                    
+                                    // Add border styles
+                                    if (isset($component->properties['borderWidth']) && $component->properties['borderWidth'] !== '0') {
+                                        $buttonStyles .= 'border: ' . $component->properties['borderWidth'] . 'px solid ' . ($component->properties['borderColor'] ?? '#00c499') . ';';
+                                    }
+                                    
+                                    // Add background and text color styles
+                                    $buttonStyles .= 'background-color: ' . ($component->properties['backgroundColor'] ?? '#00c499') . ';';
+                                    $buttonStyles .= 'color: ' . ($component->properties['textColor'] ?? '#ffffff') . ';';
+                                @endphp
                                 <a href="{{ $component->properties['url'] ?? '#' }}" 
-                                   class="block w-full bg-primary hover:bg-primary-dark text-white py-3 rounded-xl font-semibold text-center">
+                                   class="block w-full {{ trim($buttonClasses) }}"
+                                   style="{{ $buttonStyles }}">
                                     {{ $component->properties['text'] ?? 'Button' }}
                                 </a>
                                 @break
@@ -53,8 +86,33 @@
                                      class="w-full h-auto rounded">
                                 @break
                             @case('link')
+                                @php
+                                    // Build link styles
+                                    $linkClasses = '';
+                                    $linkStyles = '';
+                                    
+                                    // Add font size and weight classes
+                                    if (isset($component->properties['fontSize'])) {
+                                        $linkClasses .= ' ' . $component->properties['fontSize'];
+                                    }
+                                    if (isset($component->properties['fontWeight'])) {
+                                        $linkClasses .= ' ' . $component->properties['fontWeight'];
+                                    }
+                                    
+                                    // Add text decoration class
+                                    if (isset($component->properties['textDecoration']) && $component->properties['textDecoration'] !== 'no-underline') {
+                                        $linkClasses .= ' ' . $component->properties['textDecoration'];
+                                    } else if (isset($component->properties['textDecoration']) && $component->properties['textDecoration'] === 'no-underline') {
+                                        // Remove underline if explicitly set to no-underline
+                                        $linkClasses .= ' no-underline';
+                                    }
+                                    
+                                    // Add text color style
+                                    $linkStyles .= 'color: ' . ($component->properties['textColor'] ?? '#00c499') . ';';
+                                @endphp
                                 <a href="{{ $component->properties['url'] ?? '#' }}" 
-                                   class="block text-primary underline">
+                                   class="block {{ trim($linkClasses) }}"
+                                   style="{{ $linkStyles }}">
                                     {{ $component->properties['text'] ?? 'Link' }}
                                 </a>
                                 @break
