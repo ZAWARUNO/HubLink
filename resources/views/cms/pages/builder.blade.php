@@ -120,7 +120,25 @@
                                 <div class="component-content">
                                     @switch($component->type)
                                         @case('text')
-                                            <div class="text-content">
+                                            @php
+                                                $textClasses = '';
+                                                if (isset($component->properties['alignment'])) {
+                                                    $textClasses .= ' text-' . $component->properties['alignment'];
+                                                }
+                                                if (isset($component->properties['size'])) {
+                                                    $textClasses .= ' ' . $component->properties['size'];
+                                                }
+                                                if (isset($component->properties['bold']) && $component->properties['bold']) {
+                                                    $textClasses .= ' font-bold';
+                                                }
+                                                if (isset($component->properties['italic']) && $component->properties['italic']) {
+                                                    $textClasses .= ' italic';
+                                                }
+                                                if (isset($component->properties['underline']) && $component->properties['underline']) {
+                                                    $textClasses .= ' underline';
+                                                }
+                                            @endphp
+                                            <div class="text-content{{ $textClasses }}">
                                                 {!! $component->properties['content'] ?? 'Text content' !!}
                                             </div>
                                             @break
@@ -507,7 +525,14 @@
         
         switch(type) {
             case 'text':
-                return { content: '<p>Edit this text content</p>' };
+                return { 
+                    content: '<p>Edit this text content</p>',
+                    alignment: 'left',
+                    size: 'text-base',
+                    bold: false,
+                    italic: false,
+                    underline: false
+                };
             case 'button':
                 return { 
                     text: 'Button Text', 
@@ -594,6 +619,44 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">Content</label>
                             <textarea id="text-content" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" rows="4">${properties.content || ''}</textarea>
                         </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Text Alignment</label>
+                            <select id="text-alignment" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option value="left" ${properties.alignment === 'left' ? 'selected' : ''}>Left</option>
+                                <option value="center" ${properties.alignment === 'center' ? 'selected' : ''}>Center</option>
+                                <option value="right" ${properties.alignment === 'right' ? 'selected' : ''}>Right</option>
+                                <option value="justify" ${properties.alignment === 'justify' ? 'selected' : ''}>Justify</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Text Size</label>
+                            <select id="text-size" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option value="text-xs" ${properties.size === 'text-xs' ? 'selected' : ''}>Extra Small</option>
+                                <option value="text-sm" ${properties.size === 'text-sm' ? 'selected' : ''}>Small</option>
+                                <option value="text-base" ${properties.size === 'text-base' ? 'selected' : ''}>Base</option>
+                                <option value="text-lg" ${properties.size === 'text-lg' ? 'selected' : ''}>Large</option>
+                                <option value="text-xl" ${properties.size === 'text-xl' ? 'selected' : ''}>Extra Large</option>
+                                <option value="text-2xl" ${properties.size === 'text-2xl' ? 'selected' : ''}>2X Large</option>
+                                <option value="text-3xl" ${properties.size === 'text-3xl' ? 'selected' : ''}>3X Large</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Text Formatting</label>
+                            <div class="flex gap-2">
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" id="text-bold" class="rounded border-gray-300 text-primary focus:ring-primary" ${properties.bold ? 'checked' : ''}>
+                                    <span class="ml-2">Bold</span>
+                                </label>
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" id="text-italic" class="rounded border-gray-300 text-primary focus:ring-primary" ${properties.italic ? 'checked' : ''}>
+                                    <span class="ml-2">Italic</span>
+                                </label>
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" id="text-underline" class="rounded border-gray-300 text-primary focus:ring-primary" ${properties.underline ? 'checked' : ''}>
+                                    <span class="ml-2">Underline</span>
+                                </label>
+                            </div>
+                        </div>
                         <button onclick="saveComponentProperties()" class="w-full bg-primary hover:bg-primary-dark text-white py-2 rounded-lg">
                             Save Changes
                         </button>
@@ -628,8 +691,36 @@
                 html = `
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                            <input type="text" id="image-src" value="${properties.src || ''}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Image Source</label>
+                            <div class="flex gap-2 mb-2">
+                                <button type="button" class="tab-button active px-3 py-1 text-sm rounded-md bg-gray-100" onclick="switchImageTab('url')">URL</button>
+                                <button type="button" class="tab-button px-3 py-1 text-sm rounded-md" onclick="switchImageTab('upload')">Upload</button>
+                            </div>
+                            
+                            <!-- URL Tab -->
+                            <div id="url-tab" class="tab-content">
+                                <input type="text" id="image-src" value="${properties.src || ''}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="https://example.com/image.jpg">
+                            </div>
+                            
+                            <!-- Upload Tab -->
+                            <div id="upload-tab" class="tab-content hidden">
+                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                                    <input type="file" id="image-upload" accept="image/*" class="hidden">
+                                    <button type="button" onclick="document.getElementById('image-upload').click()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700">
+                                        Choose Image
+                                    </button>
+                                    <p id="upload-filename" class="mt-2 text-sm text-gray-500">No file chosen</p>
+                                    <button type="button" id="upload-button" onclick="uploadImageFile()" class="mt-2 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-md hidden">
+                                        Upload Image
+                                    </button>
+                                    <p class="mt-2 text-xs text-gray-500">Upload file gambar dibawah 2MB</p>
+                                </div>
+                                <div id="upload-progress" class="mt-2 hidden">
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div id="upload-progress-bar" class="bg-primary h-2 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Alt Text</label>
@@ -720,6 +811,18 @@
                 if (textContent) {
                     properties.content = textContent.value;
                 }
+                // Add new text properties
+                const textAlignment = document.getElementById('text-alignment');
+                const textSize = document.getElementById('text-size');
+                const textBold = document.getElementById('text-bold');
+                const textItalic = document.getElementById('text-italic');
+                const textUnderline = document.getElementById('text-underline');
+                
+                if (textAlignment) properties.alignment = textAlignment.value;
+                if (textSize) properties.size = textSize.value;
+                if (textBold) properties.bold = textBold.checked;
+                if (textItalic) properties.italic = textItalic.checked;
+                if (textUnderline) properties.underline = textUnderline.checked;
                 break;
             case 'button':
                 const buttonText = document.getElementById('button-text');
@@ -829,7 +932,25 @@
         if (contentElement) {
             switch(component.type) {
                 case 'text':
-                    contentElement.innerHTML = `<div class="text-content">${component.properties.content || ''}</div>`;
+                    // Build CSS classes for text formatting
+                    let textClasses = '';
+                    if (component.properties.alignment) {
+                        textClasses += ` text-${component.properties.alignment}`;
+                    }
+                    if (component.properties.size) {
+                        textClasses += ` ${component.properties.size}`;
+                    }
+                    if (component.properties.bold) {
+                        textClasses += ' font-bold';
+                    }
+                    if (component.properties.italic) {
+                        textClasses += ' italic';
+                    }
+                    if (component.properties.underline) {
+                        textClasses += ' underline';
+                    }
+                    
+                    contentElement.innerHTML = `<div class="text-content${textClasses}">${component.properties.content || ''}</div>`;
                     break;
                 case 'button':
                     // Tambahkan penanganan style button
@@ -977,10 +1098,10 @@
         // Set style based on type
         if (type === 'success') {
             wrapper.classList.add('bg-green-50', 'text-green-800');
-            icon.innerHTML = '<path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>';
+            icon.innerHTML = '<path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414L11.414 10l2.293 2.293a1 1 0 0 1 1.414 1.414L11.414 10l2.293 2.293Z"/>';
         } else if (type === 'error') {
             wrapper.classList.add('bg-red-50', 'text-red-800');
-            icon.innerHTML = '<path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 11.793a1 1 0 1 1-1.414 1.414L10 11.414l-2.293 2.293a1 1 0 0 1-1.414-1.414L8.586 10 6.293 7.707a1 1 0 0 1 1.414-1.414L10 8.586l2.293 2.293a1 1 0 0 1 1.414 1.414L11.414 10l2.293 2.293Z"/>';
+            icon.innerHTML = '<path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 11.793a1 1 0 1 1-1.414 1.414L10 11.414l-2.293 2.293a1 1 0 0 1-1.414-1.414L8.586 10 6.293 7.707a1 1 0 0 1 1.414-1.414L10 8.586l2.293 2.293a1 1 0 0 1 1.414 1.414L11.414 10l2.293 2.293a1 1 0 0 1 1.414 1.414L11.414 10l2.293 2.293Z"/>';
         }
         
         toastMessage.textContent = message;
@@ -1119,5 +1240,111 @@
     
     // Reorder components when dragged
     // This would be implemented with a proper drag-and-drop library in a real application
+    
+    function switchImageTab(tab) {
+        // Switch active tab button
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.classList.remove('active', 'bg-gray-100');
+        });
+        
+        if (tab === 'url') {
+            document.querySelector('[onclick="switchImageTab(\'url\')"]').classList.add('active', 'bg-gray-100');
+            document.getElementById('url-tab').classList.remove('hidden');
+            document.getElementById('upload-tab').classList.add('hidden');
+        } else {
+            document.querySelector('[onclick="switchImageTab(\'upload\')"]').classList.add('active', 'bg-gray-100');
+            document.getElementById('url-tab').classList.add('hidden');
+            document.getElementById('upload-tab').classList.remove('hidden');
+        }
+    }
+    
+    function uploadImageFile() {
+        const fileInput = document.getElementById('image-upload');
+        const file = fileInput.files[0];
+        
+        if (!file) {
+            showToast('Please select an image file first.', 'error');
+            return;
+        }
+        
+        // Show progress
+        document.getElementById('upload-progress').classList.remove('hidden');
+        document.getElementById('upload-button').classList.add('hidden');
+        
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        // Create XMLHttpRequest for progress tracking
+        const xhr = new XMLHttpRequest();
+        
+        // Update progress bar
+        xhr.upload.addEventListener('progress', function(e) {
+            if (e.lengthComputable) {
+                const percentComplete = (e.loaded / e.total) * 100;
+                document.getElementById('upload-progress-bar').style.width = percentComplete + '%';
+            }
+        });
+        
+        // Handle response
+        xhr.addEventListener('load', function() {
+            if (xhr.status === 200) {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.url) {
+                        // Update the image source field
+                        document.getElementById('image-src').value = response.url;
+                        showToast('Image uploaded successfully!', 'success');
+                    } else {
+                        showToast('Upload failed: ' + (response.error || 'Unknown error'), 'error');
+                    }
+                } catch (e) {
+                    showToast('Upload failed: Invalid response', 'error');
+                }
+            } else {
+                // Try to parse error response
+                try {
+                    const errorResponse = JSON.parse(xhr.responseText);
+                    showToast('Upload failed: ' + (errorResponse.error || 'Server error'), 'error');
+                } catch (e) {
+                    showToast('Upload failed: Server error (HTTP ' + xhr.status + ')', 'error');
+                }
+            }
+            
+            // Hide progress
+            document.getElementById('upload-progress').classList.add('hidden');
+            document.getElementById('upload-button').classList.remove('hidden');
+        });
+        
+        xhr.addEventListener('error', function() {
+            showToast('Upload failed: Network error', 'error');
+            document.getElementById('upload-progress').classList.add('hidden');
+            document.getElementById('upload-button').classList.remove('hidden');
+        });
+        
+        // Send request
+        xhr.open('POST', `/cms/builder/${domainId}/upload-image`);
+        // Set up CSRF token in headers (must be after open)
+        xhr.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+        xhr.send(formData);
+    }
+    
+    // Add event listener for file selection
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add existing code...
+        
+        // Add event listener for image file selection
+        document.addEventListener('change', function(e) {
+            if (e.target && e.target.id === 'image-upload') {
+                const file = e.target.files[0];
+                if (file) {
+                    document.getElementById('upload-filename').textContent = file.name;
+                    document.getElementById('upload-button').classList.remove('hidden');
+                } else {
+                    document.getElementById('upload-filename').textContent = 'No file chosen';
+                    document.getElementById('upload-button').classList.add('hidden');
+                }
+            }
+        });
+    });
 </script>
 @endsection

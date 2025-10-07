@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class BuilderController extends Controller
 {
@@ -146,6 +147,50 @@ class BuilderController extends Controller
         $components = $domain->components()->orderBy('order')->get();
         foreach ($components as $index => $component) {
             $component->update(['order' => $index]);
+        }
+    }
+    
+    public function uploadImage(Request $request, $domainId)
+    {
+        try {
+            $user = Auth::user();
+            $domain = $user->domains()->findOrFail($domainId);
+
+            // Validate the request
+            $validator = \Validator::make($request->all(), [
+                'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['error' => 'Validation failed: ' . $validator->errors()->first()], 400);
+            }
+
+            // Check if file was uploaded
+            if (!$request->hasFile('image')) {
+                return response()->json(['error' => 'No image file provided'], 400);
+            }
+
+            // Check if file is valid
+            if (!$request->file('image')->isValid()) {
+                return response()->json(['error' => 'Invalid image file'], 400);
+            }
+
+            // Store the image in the public disk
+            $imagePath = $request->file('image')->store('builder-images', 'public');
+
+            // Check if storage was successful
+            if (!$imagePath) {
+                return response()->json(['error' => 'Failed to store image'], 500);
+            }
+
+            // Return the URL of the uploaded image
+            $imageUrl = Storage::url($imagePath);
+            
+            return response()->json(['url' => $imageUrl]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['error' => 'Validation failed: ' . $e->getMessage()], 400);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to upload image: ' . $e->getMessage()], 500);
         }
     }
 }

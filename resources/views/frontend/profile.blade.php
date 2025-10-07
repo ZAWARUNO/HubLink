@@ -19,7 +19,25 @@
                     @foreach($domain->components->where('is_published', true)->sortBy('order') as $component)
                         @switch($component->type)
                             @case('text')
-                                <div class="text-content">
+                                @php
+                                    $textClasses = '';
+                                    if (isset($component->properties['alignment'])) {
+                                        $textClasses .= ' text-' . $component->properties['alignment'];
+                                    }
+                                    if (isset($component->properties['size'])) {
+                                        $textClasses .= ' ' . $component->properties['size'];
+                                    }
+                                    if (isset($component->properties['bold']) && $component->properties['bold']) {
+                                        $textClasses .= ' font-bold';
+                                    }
+                                    if (isset($component->properties['italic']) && $component->properties['italic']) {
+                                        $textClasses .= ' italic';
+                                    }
+                                    if (isset($component->properties['underline']) && $component->properties['underline']) {
+                                        $textClasses .= ' underline';
+                                    }
+                                @endphp
+                                <div class="text-content{{ $textClasses }}">
                                     {!! $component->properties['content'] ?? '' !!}
                                 </div>
                                 @break

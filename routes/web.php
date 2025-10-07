@@ -39,6 +39,8 @@ Route::middleware('auth')->prefix('cms')->name('cms.')->group(function () {
     Route::delete('/builder/{domainId}/component/{componentId}', [CmsBuilderController::class, 'deleteComponent'])->name('builder.component.delete');
     Route::post('/builder/{domainId}/reorder', [CmsBuilderController::class, 'reorderComponents'])->name('builder.components.reorder');
     Route::post('/builder/{domainId}/publish', [CmsBuilderController::class, 'publishComponents'])->name('builder.components.publish');
+    // Add image upload route
+    Route::post('/builder/{domainId}/upload-image', [CmsBuilderController::class, 'uploadImage'])->name('builder.image.upload');
 });
 
 // Public profile by slug
