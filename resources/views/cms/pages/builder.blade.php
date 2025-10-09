@@ -179,6 +179,12 @@
                     </svg>
                     <span>Divider</span>
                 </div>
+                <div draggable="true" data-type="template" class="component-item p-3 border rounded-lg cursor-move hover:bg-gray-50 flex items-center gap-2 transition-colors duration-200">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                    <span>Template</span>
+                </div>
             </div>
         </div>
 
@@ -304,14 +310,25 @@
                                                      class="resizable-image-element" style="width: 100%; height: 100%; display: block;">
                                             </div>
                                             @break
-                                        @case('link')
-                                            <a href="{{ $component->properties['url'] ?? '#' }}" 
-                                               class="text-primary underline">
-                                                {{ $component->properties['text'] ?? 'Link text' }}
-                                            </a>
-                                            @break
                                         @case('divider')
                                             <hr class="border-gray-300">
+                                            @break
+                                        @case('template')
+                                            <div class="max-w-sm rounded overflow-hidden shadow-lg bg-white">
+                                                <img class="w-full h-48 object-cover" src="{{ $component->properties['image'] ?? 'https://placehold.co/400x300' }}" alt="{{ $component->properties['title'] ?? 'Template Image' }}">
+                                                <div class="px-6 py-4">
+                                                    <div class="font-bold text-xl mb-2">{{ $component->properties['title'] ?? 'Template Title' }}</div>
+                                                    <p class="text-gray-700 text-base">
+                                                        {{ $component->properties['description'] ?? 'Template description goes here.' }}
+                                                    </p>
+                                                </div>
+                                                <div class="px-6 pt-4 pb-2 flex justify-between items-center">
+                                                    <span class="text-xl font-bold text-primary">${{ $component->properties['price'] ?? '0.00' }}</span>
+                                                    <button class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded">
+                                                        {{ $component->properties['buttonText'] ?? 'Buy Now' }}
+                                                    </button>
+                                                </div>
+                                            </div>
                                             @break
                                     @endswitch
                                 </div>
@@ -595,6 +612,25 @@
             case 'divider':
                 componentHtml = `<hr class="border-gray-300">`;
                 break;
+            case 'template':
+                componentHtml = `
+                    <div class="max-w-sm rounded overflow-hidden shadow-lg bg-white">
+                        <img class="w-full h-48 object-cover" src="https://placehold.co/400x300" alt="Template Image">
+                        <div class="px-6 py-4">
+                            <div class="font-bold text-xl mb-2">Template Title</div>
+                            <p class="text-gray-700 text-base">
+                                Template description goes here.
+                            </p>
+                        </div>
+                        <div class="px-6 pt-4 pb-2 flex justify-between items-center">
+                            <span class="text-xl font-bold text-primary">$0.00</span>
+                            <button class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded">
+                                Buy Now
+                            </button>
+                        </div>
+                    </div>
+                `;
+                break;
             default:
                 componentHtml = `<div class="text-red-500 p-2">Unknown component type: ${type}</div>`;
                 console.warn('Unknown component type:', type);
@@ -761,6 +797,14 @@
                     style: 'solid',
                     color: '#e5e7eb',
                     thickness: '1px'
+                };
+            case 'template':
+                return {
+                    image: 'https://placehold.co/400x300',
+                    title: 'Template Title',
+                    description: 'Template description goes here.',
+                    price: '0.00',
+                    buttonText: 'Buy Now'
                 };
             default:
                 console.warn('Unknown component type:', type);
@@ -1093,6 +1137,35 @@
                     </div>
                 `;
                 break;
+            case 'template':
+                html = `
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                            <input type="text" id="template-image" value="${properties.image || 'https://placehold.co/400x300'}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                            <input type="text" id="template-title" value="${properties.title || 'Template Title'}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea id="template-description" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" rows="3">${properties.description || 'Template description goes here.'}</textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Price ($)</label>
+                            <input type="text" id="template-price" value="${properties.price || '0.00'}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Button Text</label>
+                            <input type="text" id="template-button-text" value="${properties.buttonText || 'Buy Now'}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                        </div>
+                        <button onclick="saveComponentProperties()" class="w-full bg-primary hover:bg-primary-dark text-white py-2 rounded-lg">
+                            Save Changes
+                        </button>
+                    </div>
+                `;
+                break;
             default:
                 html = '<p class="text-red-500">No properties to edit for this component type.</p>';
         }
@@ -1210,6 +1283,19 @@
         if (dividerStyle) properties.style = dividerStyle.value;
         if (dividerColor) properties.color = dividerColor.value;
         if (dividerThickness) properties.thickness = dividerThickness.value;
+        
+        // Template component properties
+        const templateImage = document.getElementById('template-image');
+        const templateTitle = document.getElementById('template-title');
+        const templateDescription = document.getElementById('template-description');
+        const templatePrice = document.getElementById('template-price');
+        const templateButtonText = document.getElementById('template-button-text');
+        
+        if (templateImage) properties.image = templateImage.value;
+        if (templateTitle) properties.title = templateTitle.value;
+        if (templateDescription) properties.description = templateDescription.value;
+        if (templatePrice) properties.price = templatePrice.value;
+        if (templateButtonText) properties.buttonText = templateButtonText.value;
         
         return properties;
     }
@@ -1330,6 +1416,25 @@
                 const color = properties.color || '#e5e7eb';
                 const style = properties.style || 'solid';
                 contentElement.innerHTML = `<hr style="border: ${thickness} ${style} ${color};">`;
+                break;
+            case 'template':
+                contentElement.innerHTML = `
+                    <div class="max-w-sm rounded overflow-hidden shadow-lg bg-white">
+                        <img class="w-full h-48 object-cover" src="${properties.image || 'https://placehold.co/400x300'}" alt="${properties.title || 'Template Image'}">
+                        <div class="px-6 py-4">
+                            <div class="font-bold text-xl mb-2">${properties.title || 'Template Title'}</div>
+                            <p class="text-gray-700 text-base">
+                                ${properties.description || 'Template description goes here.'}
+                            </p>
+                        </div>
+                        <div class="px-6 pt-4 pb-2 flex justify-between items-center">
+                            <span class="text-xl font-bold text-primary">$${properties.price || '0.00'}</span>
+                            <button class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded">
+                                ${properties.buttonText || 'Buy Now'}
+                            </button>
+                        </div>
+                    </div>
+                `;
                 break;
         }
     }
@@ -1518,6 +1623,25 @@
                     const color = component.properties.color || '#e5e7eb';
                     const style = component.properties.style || 'solid';
                     contentElement.innerHTML = `<hr style="border: ${thickness} ${style} ${color};">`;
+                    break;
+                case 'template':
+                    contentElement.innerHTML = `
+                        <div class="max-w-sm rounded overflow-hidden shadow-lg bg-white">
+                            <img class="w-full h-48 object-cover" src="${component.properties.image || 'https://placehold.co/400x300'}" alt="${component.properties.title || 'Template Image'}">
+                            <div class="px-6 py-4">
+                                <div class="font-bold text-xl mb-2">${component.properties.title || 'Template Title'}</div>
+                                <p class="text-gray-700 text-base">
+                                    ${component.properties.description || 'Template description goes here.'}
+                                </p>
+                            </div>
+                            <div class="px-6 pt-4 pb-2 flex justify-between items-center">
+                                <span class="text-xl font-bold text-primary">$${component.properties.price || '0.00'}</span>
+                                <button class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded">
+                                    ${component.properties.buttonText || 'Buy Now'}
+                                </button>
+                            </div>
+                        </div>
+                    `;
                     break;
                 default:
                     // Handle unknown component types gracefully
