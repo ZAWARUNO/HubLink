@@ -323,7 +323,7 @@
                                                     </p>
                                                 </div>
                                                 <div class="px-6 pt-4 pb-2 flex justify-between items-center">
-                                                    <span class="text-xl font-bold text-primary">${{ $component->properties['price'] ?? '0.00' }}</span>
+                                                    <span class="text-xl font-bold text-primary">Rp {{ number_format($component->properties['price'] ?? 0, 0, ',', '.') }}</span>
                                                     <button class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded">
                                                         {{ $component->properties['buttonText'] ?? 'Buy Now' }}
                                                     </button>
@@ -411,6 +411,29 @@
     const domainId = {{ $domain->id }};
     let currentComponentId = null;
     let currentComponentType = null;
+    
+    // Format number as Rupiah currency
+    function formatRupiahValue(angka) {
+        if (!angka) return '0';
+        // If already formatted, return as is
+        if (typeof angka === 'string' && angka.includes('.')) {
+            return angka;
+        }
+        return parseInt(angka).toLocaleString('id-ID');
+    }
+    
+    // Format input field as Rupiah currency
+    function formatRupiah(input) {
+        // Remove all non-digit characters
+        let value = input.value.replace(/[\D]/g, '');
+        
+        // Format as Rupiah
+        if (value) {
+            input.value = parseInt(value).toLocaleString('id-ID');
+        } else {
+            input.value = '';
+        }
+    }
     
     document.addEventListener('DOMContentLoaded', function() {
         // Make components draggable
@@ -623,7 +646,7 @@
                             </p>
                         </div>
                         <div class="px-6 pt-4 pb-2 flex justify-between items-center">
-                            <span class="text-xl font-bold text-primary">$0.00</span>
+                            <span class="text-xl font-bold text-primary">Rp 0</span>
                             <button class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded">
                                 Buy Now
                             </button>
@@ -803,7 +826,7 @@
                     image: 'https://placehold.co/400x300',
                     title: 'Template Title',
                     description: 'Template description goes here.',
-                    price: '0.00',
+                    price: 0,
                     buttonText: 'Buy Now'
                 };
             default:
@@ -1153,8 +1176,8 @@
                             <textarea id="template-description" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" rows="3">${properties.description || 'Template description goes here.'}</textarea>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Price ($)</label>
-                            <input type="text" id="template-price" value="${properties.price || '0.00'}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Price (Rp)</label>
+                            <input type="text" id="template-price" value="${formatRupiahValue(properties.price) || '0'}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" oninput="formatRupiah(this)">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Button Text</label>
@@ -1294,7 +1317,10 @@
         if (templateImage) properties.image = templateImage.value;
         if (templateTitle) properties.title = templateTitle.value;
         if (templateDescription) properties.description = templateDescription.value;
-        if (templatePrice) properties.price = templatePrice.value;
+        if (templatePrice) {
+            // Convert formatted Rupiah string back to numeric value
+            properties.price = templatePrice.value.replace(/[.]/g, '');
+        }
         if (templateButtonText) properties.buttonText = templateButtonText.value;
         
         return properties;
@@ -1428,7 +1454,7 @@
                             </p>
                         </div>
                         <div class="px-6 pt-4 pb-2 flex justify-between items-center">
-                            <span class="text-xl font-bold text-primary">$${properties.price || '0.00'}</span>
+                            <span class="text-xl font-bold text-primary">Rp ${formatRupiahValue(properties.price || 0)}</span>
                             <button class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded">
                                 ${properties.buttonText || 'Buy Now'}
                             </button>
@@ -1635,7 +1661,7 @@
                                 </p>
                             </div>
                             <div class="px-6 pt-4 pb-2 flex justify-between items-center">
-                                <span class="text-xl font-bold text-primary">$${component.properties.price || '0.00'}</span>
+                                <span class="text-xl font-bold text-primary">Rp ${formatRupiahValue(component.properties.price || 0)}</span>
                                 <button class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded">
                                     ${component.properties.buttonText || 'Buy Now'}
                                 </button>
