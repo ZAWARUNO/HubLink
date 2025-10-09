@@ -81,9 +81,33 @@
                                 </a>
                                 @break
                             @case('image')
-                                <img src="{{ $component->properties['src'] ?? '' }}" 
-                                     alt="{{ $component->properties['alt'] ?? 'Image' }}" 
-                                     class="w-full h-auto rounded">
+                                @php
+                                    // Get width, height, and alignment from properties
+                                    $width = $component->properties['width'] ?? '100%';
+                                    $height = $component->properties['height'] ?? 'auto';
+                                    $alignment = $component->properties['alignment'] ?? 'left';
+                                    
+                                    // Build container classes based on alignment
+                                    $containerClasses = '';
+                                    if ($alignment === 'center') {
+                                        $containerClasses = 'text-center';
+                                    } elseif ($alignment === 'right') {
+                                        $containerClasses = 'text-right';
+                                    } else {
+                                        $containerClasses = 'text-left';
+                                    }
+                                    
+                                    // Build image styles
+                                    $imageStyles = "width: {$width}; height: {$height};";
+                                @endphp
+                                <div class="{{ $containerClasses }}">
+                                    <div style="display: inline-block; {{ $imageStyles }}">
+                                        <img src="{{ $component->properties['src'] ?? '' }}" 
+                                             alt="{{ $component->properties['alt'] ?? 'Image' }}" 
+                                             style="width: 100%; height: 100%; display: block; object-fit: cover;"
+                                             class="rounded">
+                                    </div>
+                                </div>
                                 @break
                             @case('link')
                                 @php
@@ -117,7 +141,16 @@
                                 </a>
                                 @break
                             @case('divider')
-                                <hr class="border-gray-300">
+                                @php
+                                    // Get divider properties
+                                    $dividerStyle = $component->properties['style'] ?? 'solid';
+                                    $dividerColor = $component->properties['color'] ?? '#e5e7eb';
+                                    $dividerThickness = $component->properties['thickness'] ?? '1px';
+                                    
+                                    // Build divider inline styles
+                                    $dividerStyles = "border: {$dividerThickness} {$dividerStyle} {$dividerColor}; border-top-width: {$dividerThickness}; border-bottom: 0; border-left: 0; border-right: 0;";
+                                @endphp
+                                <hr style="{{ $dividerStyles }}">
                                 @break
                         @endswitch
                     @endforeach

@@ -189,7 +189,7 @@
                     <div id="canvas" class="space-y-4">
                         <!-- Components will be added here -->
                         @if($components->count() == 0)
-                            <div class="text-center py-12 text-gray-500">
+                            <div id="empty-canvas-message" class="text-center py-12 text-gray-500">
                                 <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                                 </svg>
@@ -429,13 +429,35 @@
             console.warn('SortableJS not loaded or canvas not found');
         }
         
-        // Initialize resize handles for existing image components
-        setTimeout(() => {
-            document.querySelectorAll('.component-wrapper[data-type="image"]').forEach(component => {
-                addResizeHandles(component);
-            });
-        }, 100);
+        // Reattach event listeners when components are deleted
+        observeCanvasChanges();
     });
+    
+    // Observe changes to the canvas to reattach event listeners when needed
+    function observeCanvasChanges() {
+        const canvas = document.getElementById('canvas');
+        if (!canvas) return;
+        
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                // If nodes are added or removed
+                if (mutation.type === 'childList') {
+                    // Reattach drag and drop event listeners to canvas
+                    canvas.removeEventListener('dragover', dragOver);
+                    canvas.removeEventListener('dragenter', dragEnter);
+                    canvas.removeEventListener('dragleave', dragLeave);
+                    canvas.removeEventListener('drop', drop);
+                    
+                    canvas.addEventListener('dragover', dragOver);
+                    canvas.addEventListener('dragenter', dragEnter);
+                    canvas.addEventListener('dragleave', dragLeave);
+                    canvas.addEventListener('drop', drop);
+                }
+            });
+        });
+        
+        observer.observe(canvas, { childList: true, subtree: true });
+    }
     
     function dragStart(e) {
         // Validasi event
@@ -531,6 +553,12 @@
     }
     
     function addComponentToCanvas(type) {
+        // Remove empty canvas message if it exists
+        const emptyMessage = document.getElementById('empty-canvas-message');
+        if (emptyMessage) {
+            emptyMessage.remove();
+        }
+        
         // Create a temporary ID for the new component
         const tempId = 'temp_' + Date.now();
         let componentHtml = '';
@@ -1538,6 +1566,21 @@
             } else {
                 // Jika elemen tidak ditemukan, tetap tampilkan pesan sukses
                 showToast('Component deleted successfully!', 'success');
+            }
+            
+            // Check if canvas is empty and show empty message
+            const canvas = document.getElementById('canvas');
+            if (canvas && canvas.children.length === 0) {
+                const emptyMessage = `
+                    <div id="empty-canvas-message" class="text-center py-12 text-gray-500">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900">No components yet</h3>
+                        <p class="mt-1 text-sm text-gray-500">Drag components here from the left panel</p>
+                    </div>
+                `;
+                canvas.innerHTML = emptyMessage;
             }
         })
         .catch(error => {
