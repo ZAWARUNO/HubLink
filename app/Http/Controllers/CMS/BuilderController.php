@@ -193,4 +193,51 @@ class BuilderController extends Controller
             return response()->json(['error' => 'Failed to upload image: ' . $e->getMessage()], 500);
         }
     }
+
+    public function uploadDigitalProduct(Request $request, $domainId)
+    {
+        try {
+            $user = Auth::user();
+            $domain = $user->domains()->findOrFail($domainId);
+
+            // Validate the request
+            $validator = \Validator::make($request->all(), [
+                'file' => 'required|file|max:10240|mimes:pdf,zip,doc,docx,xls,xlsx,jpg,jpeg,png,gif', // 10MB max
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['error' => 'Validation failed: ' . $validator->errors()->first()], 400);
+            }
+
+            // Check if file was uploaded
+            if (!$request->hasFile('file')) {
+                return response()->json(['error' => 'No file provided'], 400);
+            }
+
+            // Check if file is valid
+            if (!$request->file('file')->isValid()) {
+                return response()->json(['error' => 'Invalid file'], 400);
+            }
+
+            // Store the file in a private disk
+            $filePath = $request->file('file')->store('digital-products', 'private');
+
+            // Check if storage was successful
+            if (!$filePath) {
+                return response()->json(['error' => 'Failed to store file'], 500);
+            }
+
+            // Return the file path and original name
+            return response()->json([
+                'path' => $filePath,
+                'originalName' => $request->file('file')->getClientOriginalName(),
+                'fileType' => $request->file('file')->getClientMimeType(),
+                'fileSize' => $request->file('file')->getSize()
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['error' => 'Validation failed: ' . $e->getMessage()], 400);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to upload file: ' . $e->getMessage()], 500);
+        }
+    }
 }

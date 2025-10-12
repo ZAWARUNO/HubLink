@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CMS\HomeController as CmsHomeController;
 use App\Http\Controllers\CMS\DomainController as CmsDomainController;
 use App\Http\Controllers\CMS\BuilderController as CmsBuilderController;
+use App\Http\Controllers\CheckoutController;
 use App\Models\Domain;
 
 Route::get('/', function () {
@@ -41,7 +42,13 @@ Route::middleware('auth')->prefix('cms')->name('cms.')->group(function () {
     Route::post('/builder/{domainId}/publish', [CmsBuilderController::class, 'publishComponents'])->name('builder.components.publish');
     // Add image upload route
     Route::post('/builder/{domainId}/upload-image', [CmsBuilderController::class, 'uploadImage'])->name('builder.image.upload');
+    // Add digital product upload route
+    Route::post('/builder/{domainId}/upload-digital-product', [CmsBuilderController::class, 'uploadDigitalProduct'])->name('builder.digital.upload');
 });
+
+// Checkout routes
+Route::get('/{domain}/checkout/{componentId}', [CheckoutController::class, 'show'])->name('checkout.show');
+Route::post('/{domain}/checkout/{componentId}', [CheckoutController::class, 'process'])->name('checkout.process');
 
 // Public profile by slug
 Route::get('/{slug}', function (string $slug) {

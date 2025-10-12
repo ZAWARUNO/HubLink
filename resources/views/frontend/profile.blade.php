@@ -168,9 +168,9 @@
                                     </div>
                                     <div class="px-6 pt-4 pb-2 flex justify-between items-center">
                                         <span class="text-xl font-bold text-primary">{{ $formattedPrice }}</span>
-                                        <button class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded">
+                                        <a href="{{ route('checkout.show', ['domain' => $domain, 'componentId' => $component->id]) }}" class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded no-underline">
                                             {{ $component->properties['buttonText'] ?? 'Buy Now' }}
-                                        </button>
+                                        </a>
                                     </div>
                                 </div>
                                 @break

@@ -8,6 +8,14 @@
 	<script src="https://cdn.tailwindcss.com"></script>
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 	<link href="{{ asset('css/builder.css') }}" rel="stylesheet">
+	
+	<!-- CSRF Token -->
+    	<meta name="csrf-token" content="{{ csrf_token() }}">
+	
+	<!-- Scripts -->
+	<script>
+		window.csrfToken = '{{ csrf_token() }}';
+	</script>
 	<style>body{font-family:'Inter',sans-serif}
 		/* Mobile sidebar */
 		.mobile-sidebar {
@@ -227,6 +235,25 @@
 				sidebar.classList.toggle('hidden');
 			}
 		}
+	</script>
+	
+	@stack('scripts')
+	
+	<script>
+		// Add CSRF token to all AJAX requests
+		document.addEventListener('DOMContentLoaded', function() {
+			// Set up AJAX CSRF token
+			let token = document.head.querySelector('meta[name="csrf-token"]');
+			if (token) {
+				window.axios = {
+					defaults: {
+						headers: {
+							'X-CSRF-TOKEN': token.content
+						}
+					}
+				};
+			}
+		});
 	</script>
 
 </body>

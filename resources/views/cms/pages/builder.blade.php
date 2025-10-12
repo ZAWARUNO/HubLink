@@ -1,6 +1,10 @@
 @extends('cms.layouts.app')
 
 @section('content')
+@push('scripts')
+    <script src="{{ asset('js/image-resize.js') }}"></script>
+@endpush
+
 <style>
     .sortable-ghost {
         opacity: 0.5;
@@ -324,9 +328,9 @@
                                                 </div>
                                                 <div class="px-6 pt-4 pb-2 flex justify-between items-center">
                                                     <span class="text-xl font-bold text-primary">Rp {{ number_format($component->properties['price'] ?? 0, 0, ',', '.') }}</span>
-                                                    <button class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded">
+                                                    <a href="{{ route('checkout.show', ['domain' => $domain, 'componentId' => $component->id]) }}" class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded no-underline">
                                                         {{ $component->properties['buttonText'] ?? 'Buy Now' }}
-                                                    </button>
+                                                    </a>
                                                 </div>
                                             </div>
                                             @break
@@ -406,11 +410,48 @@
 
 <!-- Include SortableJS from CDN -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
+    // Verify that required libraries are loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Checking required libraries...');
+        if (typeof Sortable === 'undefined') {
+            console.error('SortableJS not loaded!');
+        } else {
+            console.log('SortableJS loaded successfully');
+        }
+        
+        if (typeof jQuery === 'undefined') {
+            console.error('jQuery not loaded!');
+        } else {
+            console.log('jQuery loaded successfully');
+        }
+    });
     const domainId = {{ $domain->id }};
     let currentComponentId = null;
     let currentComponentType = null;
+    
+    // Handle digital product file selection
+    function handleDigitalProductSelect(input) {
+        const file = input.files[0];
+        const filename = document.getElementById('digital-product-filename');
+        const uploadBtn = document.getElementById('digital-product-upload-button');
+        const productInfo = document.getElementById('digital-product-info');
+        
+        if (file) {
+            // Show filename and size
+            filename.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
+            // Hide previous upload info
+            productInfo.classList.add('hidden');
+            // Show upload button
+            uploadBtn.classList.remove('hidden');
+        } else {
+            // Reset UI if no file selected
+            filename.textContent = 'No file chosen';
+            uploadBtn.classList.add('hidden');
+        }
+    }
     
     // Format number as Rupiah currency
     function formatRupiahValue(angka) {
@@ -436,10 +477,16 @@
     }
     
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM Content Loaded - Initializing builder...');
+        
         // Make components draggable
-        document.querySelectorAll('.component-item').forEach(item => {
+        const componentItems = document.querySelectorAll('.component-item');
+        console.log('Found component items:', componentItems.length);
+        
+        componentItems.forEach(item => {
             item.addEventListener('dragstart', dragStart);
             item.addEventListener('dragend', dragEnd);
+            console.log('Added drag listeners to:', item.dataset.type);
         });
         
         // Make canvas a drop zone
@@ -453,13 +500,18 @@
         
         // Initialize SortableJS for component reordering
         if (typeof Sortable !== 'undefined' && canvas) {
+            console.log('Initializing Sortable...');
             const sortable = new Sortable(canvas, {
                 animation: 150,
                 ghostClass: 'sortable-ghost',
                 dragClass: 'sortable-drag',
                 chosenClass: 'sortable-chosen',
-                dragoverBubble: false,
-                fallbackTolerance: 3,
+                handle: '.component-wrapper',
+                group: {
+                    name: 'shared',
+                    pull: true,
+                    put: true
+                },
                 onEnd: function (evt) {
                     // Update order on server
                     reorderComponents();
@@ -500,6 +552,8 @@
     }
     
     function dragStart(e) {
+        console.log('Drag started:', e.target.dataset.type);
+        
         // Validasi event
         if (!e || !e.target) {
             console.error('Invalid drag event');
@@ -512,11 +566,22 @@
             return;
         }
         
-        e.dataTransfer.setData('text/plain', e.target.dataset.type);
-        e.dataTransfer.effectAllowed = 'copy';
-        
-        // Add visual feedback
-        e.target.classList.add('dragging');
+        try {
+            e.dataTransfer.setData('text/plain', e.target.dataset.type);
+            e.dataTransfer.effectAllowed = 'copy';
+            
+            // Add visual feedback
+            e.target.classList.add('dragging');
+            
+            // Set drag image if needed
+            const dragImage = e.target.cloneNode(true);
+            dragImage.style.opacity = '0.5';
+            document.body.appendChild(dragImage);
+            e.dataTransfer.setDragImage(dragImage, 0, 0);
+            setTimeout(() => document.body.removeChild(dragImage), 0);
+        } catch (error) {
+            console.error('Error in dragStart:', error);
+        }
     }
     
     // Add dragEnd function to clean up visual feedback
@@ -574,6 +639,7 @@
     
     function drop(e) {
         e.preventDefault();
+        console.log('Drop event triggered');
         
         // Validasi event
         if (!e) {
@@ -586,9 +652,15 @@
             canvas.classList.remove('drag-over');
         }
         
-        const type = e.dataTransfer.getData('text/plain');
-        if (type) {
-            addComponentToCanvas(type);
+        try {
+            const type = e.dataTransfer.getData('text/plain');
+            console.log('Dropped component type:', type);
+            
+            if (type) {
+                addComponentToCanvas(type);
+            }
+        } catch (error) {
+            console.error('Error in drop function:', error);
         }
     }
     
@@ -827,7 +899,13 @@
                     title: 'Template Title',
                     description: 'Template description goes here.',
                     price: 0,
-                    buttonText: 'Buy Now'
+                    buttonText: 'Buy Now',
+                    digitalProduct: {
+                        path: '',
+                        originalName: '',
+                        fileType: '',
+                        fileSize: 0
+                    }
                 };
             default:
                 console.warn('Unknown component type:', type);
@@ -836,6 +914,8 @@
     }
     
     function editComponent(componentId) {
+        console.log('Editing component:', componentId);
+        
         // Validasi parameter
         if (!componentId) {
             console.error('Invalid component ID');
@@ -843,24 +923,40 @@
             return;
         }
         
-        const component = document.querySelector(`.component-wrapper[data-id="${componentId}"]`);
-        if (!component) {
-            console.error('Component not found:', componentId);
-            showToast('Component not found. Please try again.', 'error');
-            return;
+        try {
+            const component = document.querySelector(`.component-wrapper[data-id="${componentId}"]`);
+            if (!component) {
+                console.error('Component not found:', componentId);
+                showToast('Component not found. Please try again.', 'error');
+                return;
+            }
+            
+            // Remove selected class from all components
+            document.querySelectorAll('.component-wrapper').forEach(comp => {
+                comp.classList.remove('selected');
+            });
+            
+            // Add selected class to current component
+            component.classList.add('selected');
+            
+            currentComponentId = componentId;
+            currentComponentType = component.dataset.type;
+            
+            console.log('Component type:', currentComponentType);
+            
+            // Show properties panel
+            const propertiesPanel = document.getElementById('properties-panel');
+            if (propertiesPanel) {
+                propertiesPanel.classList.remove('hidden');
+                console.log('Properties panel shown');
+            }
+            
+            // Load properties based on component type
+            loadProperties(component);
+        } catch (error) {
+            console.error('Error in editComponent:', error);
+            showToast('Error editing component. Please try again.', 'error');
         }
-        
-        currentComponentId = componentId;
-        currentComponentType = component.dataset.type;
-        
-        // Show properties panel
-        const propertiesPanel = document.getElementById('properties-panel');
-        if (propertiesPanel) {
-            propertiesPanel.classList.remove('hidden');
-        }
-        
-        // Load properties based on component type
-        loadProperties(component);
     }
     
     function loadProperties(component) {
@@ -1164,8 +1260,36 @@
                 html = `
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                            <input type="text" id="template-image" value="${properties.image || 'https://placehold.co/400x300'}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Image</label>
+                            <div class="flex gap-2 mb-2">
+                                <button type="button" class="tab-button active px-3 py-1 text-sm rounded-md bg-gray-100" onclick="switchTemplateImageTab('url')">URL</button>
+                                <button type="button" class="tab-button px-3 py-1 text-sm rounded-md" onclick="switchTemplateImageTab('upload')">Upload</button>
+                            </div>
+                            
+                            <!-- URL Tab -->
+                            <div id="template-url-tab" class="tab-content">
+                                <input type="text" id="template-image" value="${properties.image || 'https://placehold.co/400x300'}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="https://example.com/image.jpg">
+                            </div>
+                            
+                            <!-- Upload Tab -->
+                            <div id="template-upload-tab" class="tab-content hidden">
+                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                                    <input type="file" id="template-image-upload" accept="image/*" class="hidden">
+                                    <button type="button" onclick="document.getElementById('template-image-upload').click()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700">
+                                        Choose Image
+                                    </button>
+                                    <p id="template-upload-filename" class="mt-2 text-sm text-gray-500">No file chosen</p>
+                                    <button type="button" id="template-upload-button" onclick="uploadTemplateImageFile()" class="mt-2 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-md hidden">
+                                        Upload Image
+                                    </button>
+                                    <p class="mt-2 text-xs text-gray-500">Upload file gambar dibawah 2MB</p>
+                                </div>
+                                <div id="template-upload-progress" class="mt-2 hidden">
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div id="template-upload-progress-bar" class="bg-primary h-2 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
@@ -1183,7 +1307,40 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">Button Text</label>
                             <input type="text" id="template-button-text" value="${properties.buttonText || 'Buy Now'}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
                         </div>
-                        <button onclick="saveComponentProperties()" class="w-full bg-primary hover:bg-primary-dark text-white py-2 rounded-lg">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Digital Product</label>
+                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                                <input type="file" id="digital-product-upload" onchange="handleDigitalProductSelect(this)" class="hidden" accept=".pdf,.zip,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif">
+                                <div class="text-center">
+                                    <button type="button" onclick="document.getElementById('digital-product-upload').click()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700">
+                                        Choose Digital Product
+                                    </button>
+                                    <p id="digital-product-filename" class="mt-2 text-sm text-gray-500">
+                                        ${properties.digitalProduct && properties.digitalProduct.originalName ? properties.digitalProduct.originalName : 'No file chosen'}
+                                    </p>
+                                    <button type="button" id="digital-product-upload-button" onclick="uploadDigitalProduct()" class="mt-2 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-md hidden">
+                                        Upload Product
+                                    </button>
+                                    <p class="mt-2 text-xs text-gray-500">Upload PDF, ZIP, DOC, XLS, or image files (max 10MB)</p>
+                                </div>
+                                <div id="digital-product-upload-progress" class="mt-2 hidden">
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div id="digital-product-upload-progress-bar" class="bg-primary h-2 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div id="digital-product-info" class="mt-2 text-sm text-gray-600 ${properties.digitalProduct && properties.digitalProduct.path ? '' : 'hidden'}">
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        <span>Product file uploaded</span>
+                                    </div>
+                                    ${properties.digitalProduct && properties.digitalProduct.fileSize ? 
+                                        `<p class="mt-1 text-xs">File size: ${formatFileSize(properties.digitalProduct.fileSize)}</p>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="saveComponentProperties()" class="w-full bg-primary hover:bg-primary-dark text-white py-2 rounded-lg mt-4">
                             Save Changes
                         </button>
                     </div>
@@ -1222,106 +1379,200 @@
     }
     
     function getCurrentPropertyValues() {
+        console.log('Getting current property values...');
         const properties = {};
         
         // Text component properties
-        const textContent = document.getElementById('text-content');
-        const textAlignment = document.getElementById('text-alignment');
-        const textSize = document.getElementById('text-size');
-        const textBold = document.getElementById('text-bold');
-        const textItalic = document.getElementById('text-italic');
-        const textUnderline = document.getElementById('text-underline');
+        let textContent, textAlignment, textSize, textBold, textItalic, textUnderline;
+        try {
+            textContent = document.getElementById('text-content');
+            textAlignment = document.getElementById('text-alignment');
+            textSize = document.getElementById('text-size');
+            textBold = document.getElementById('text-bold');
+            textItalic = document.getElementById('text-italic');
+            textUnderline = document.getElementById('text-underline');
+        } catch(error) {
+            console.error('Error getting text component elements:', error);
+            showToast('Error getting text component elements. Please try again.', 'error');
+        }
         
-        if (textContent) properties.content = textContent.value;
-        if (textAlignment) properties.alignment = textAlignment.value;
-        if (textSize) properties.size = textSize.value;
-        if (textBold) properties.bold = textBold.checked;
-        if (textItalic) properties.italic = textItalic.checked;
-        if (textUnderline) properties.underline = textUnderline.checked;
+        try {
+            if (textContent) properties.content = textContent.value;
+            if (textAlignment) properties.alignment = textAlignment.value;
+            if (textSize) properties.size = textSize.value;
+            if (textBold) properties.bold = textBold.checked;
+            if (textItalic) properties.italic = textItalic.checked;
+            if (textUnderline) properties.underline = textUnderline.checked;
+        } catch(error) {
+            console.error('Error getting text component properties:', error);
+            showToast('Error getting text component properties. Please try again.', 'error');
+        }
         
         // Button component properties
-        const buttonText = document.getElementById('button-text');
-        const buttonUrl = document.getElementById('button-url');
-        const buttonBgColor = document.getElementById('button-bg-color');
-        const buttonBgColorValue = document.getElementById('button-bg-color-value');
-        const buttonTextColor = document.getElementById('button-text-color');
-        const buttonTextColorValue = document.getElementById('button-text-color-value');
-        const buttonBorderColor = document.getElementById('button-border-color');
-        const buttonBorderColorValue = document.getElementById('button-border-color-value');
-        const buttonBorderWidth = document.getElementById('button-border-width');
-        const buttonBorderRadius = document.getElementById('button-border-radius');
-        const buttonPadding = document.getElementById('button-padding');
-        const buttonFontSize = document.getElementById('button-font-size');
-        const buttonFontWeight = document.getElementById('button-font-weight');
+        let buttonText, buttonUrl, buttonBgColor, buttonBgColorValue, buttonTextColor,
+            buttonTextColorValue, buttonBorderColor, buttonBorderColorValue, buttonBorderWidth,
+            buttonBorderRadius, buttonPadding, buttonFontSize, buttonFontWeight;
+            
+        try {
+            buttonText = document.getElementById('button-text');
+            buttonUrl = document.getElementById('button-url');
+            buttonBgColor = document.getElementById('button-bg-color');
+            buttonBgColorValue = document.getElementById('button-bg-color-value');
+            buttonTextColor = document.getElementById('button-text-color');
+            buttonTextColorValue = document.getElementById('button-text-color-value');
+            buttonBorderColor = document.getElementById('button-border-color');
+            buttonBorderColorValue = document.getElementById('button-border-color-value');
+            buttonBorderWidth = document.getElementById('button-border-width');
+            buttonBorderRadius = document.getElementById('button-border-radius');
+            buttonPadding = document.getElementById('button-padding');
+            buttonFontSize = document.getElementById('button-font-size');
+            buttonFontWeight = document.getElementById('button-font-weight');
+        } catch(error) {
+            console.error('Error getting button component elements:', error);
+            showToast('Error getting button component elements. Please try again.', 'error');
+        }
         
-        if (buttonText) properties.text = buttonText.value;
-        if (buttonUrl) properties.url = buttonUrl.value;
-        if (buttonBgColor) properties.backgroundColor = buttonBgColor.value;
-        if (buttonBgColorValue) properties.backgroundColor = buttonBgColorValue.value;
-        if (buttonTextColor) properties.textColor = buttonTextColor.value;
-        if (buttonTextColorValue) properties.textColor = buttonTextColorValue.value;
-        if (buttonBorderColor) properties.borderColor = buttonBorderColor.value;
-        if (buttonBorderColorValue) properties.borderColor = buttonBorderColorValue.value;
-        if (buttonBorderWidth) properties.borderWidth = buttonBorderWidth.value;
-        if (buttonBorderRadius) properties.borderRadius = buttonBorderRadius.value;
-        if (buttonPadding) properties.padding = buttonPadding.value;
-        if (buttonFontSize) properties.fontSize = buttonFontSize.value;
-        if (buttonFontWeight) properties.fontWeight = buttonFontWeight.value;
+        try {
+            if (buttonText) properties.text = buttonText.value;
+            if (buttonUrl) properties.url = buttonUrl.value;
+            if (buttonBgColor) properties.backgroundColor = buttonBgColor.value;
+            if (buttonBgColorValue) properties.backgroundColor = buttonBgColorValue.value;
+            if (buttonTextColor) properties.textColor = buttonTextColor.value;
+            if (buttonTextColorValue) properties.textColor = buttonTextColorValue.value;
+            if (buttonBorderColor) properties.borderColor = buttonBorderColor.value;
+            if (buttonBorderColorValue) properties.borderColor = buttonBorderColorValue.value;
+            if (buttonBorderWidth) properties.borderWidth = buttonBorderWidth.value;
+            if (buttonBorderRadius) properties.borderRadius = buttonBorderRadius.value;
+            if (buttonPadding) properties.padding = buttonPadding.value;
+            if (buttonFontSize) properties.fontSize = buttonFontSize.value;
+            if (buttonFontWeight) properties.fontWeight = buttonFontWeight.value;
+        } catch(error) {
+            console.error('Error getting button component properties:', error);
+            showToast('Error getting button component properties. Please try again.', 'error');
+        }
         
         // Image component properties
-        const imageSrc = document.getElementById('image-src');
-        const imageAlt = document.getElementById('image-alt');
-        const imageWidth = document.getElementById('image-width');
-        const imageHeight = document.getElementById('image-height');
+        let imageSrc, imageAlt, imageWidth, imageHeight;
+        try {
+            imageSrc = document.getElementById('image-src');
+            imageAlt = document.getElementById('image-alt');
+            imageWidth = document.getElementById('image-width');
+            imageHeight = document.getElementById('image-height');
+        } catch(error) {
+            console.error('Error getting image component elements:', error);
+            showToast('Error getting image component elements. Please try again.', 'error');
+        }
         
-        if (imageSrc) properties.src = imageSrc.value;
-        if (imageAlt) properties.alt = imageAlt.value;
-        if (imageWidth) properties.width = imageWidth.value;
-        if (imageHeight) properties.height = imageHeight.value;
+        try {
+            if (imageSrc) properties.src = imageSrc.value;
+            if (imageAlt) properties.alt = imageAlt.value;
+            if (imageWidth) properties.width = imageWidth.value;
+            if (imageHeight) properties.height = imageHeight.value;
+        } catch(error) {
+            console.error('Error getting image component properties:', error);
+            showToast('Error getting image component properties. Please try again.', 'error');
+        }
         
         // Link component properties
-        const linkText = document.getElementById('link-text');
-        const linkUrl = document.getElementById('link-url');
-        const linkTarget = document.getElementById('link-target');
-        const linkTextColor = document.getElementById('link-text-color');
-        const linkTextColorValue = document.getElementById('link-text-color-value');
-        const linkFontSize = document.getElementById('link-font-size');
-        const linkFontWeight = document.getElementById('link-font-weight');
-        const linkTextDecoration = document.getElementById('link-text-decoration');
+        let linkText, linkUrl, linkTarget, linkTextColor, linkTextColorValue, 
+            linkFontSize, linkFontWeight, linkTextDecoration;
+        try {
+            linkText = document.getElementById('link-text');
+            linkUrl = document.getElementById('link-url');
+            linkTarget = document.getElementById('link-target');
+            linkTextColor = document.getElementById('link-text-color');
+            linkTextColorValue = document.getElementById('link-text-color-value');
+            linkFontSize = document.getElementById('link-font-size');
+            linkFontWeight = document.getElementById('link-font-weight');
+            linkTextDecoration = document.getElementById('link-text-decoration');
+        } catch(error) {
+            console.error('Error getting link component elements:', error);
+            showToast('Error getting link component elements. Please try again.', 'error');
+        }
         
-        if (linkText) properties.text = linkText.value;
-        if (linkUrl) properties.url = linkUrl.value;
-        if (linkTarget) properties.target = linkTarget.value;
-        if (linkTextColor) properties.textColor = linkTextColor.value;
-        if (linkTextColorValue) properties.textColor = linkTextColorValue.value;
-        if (linkFontSize) properties.fontSize = linkFontSize.value;
-        if (linkFontWeight) properties.fontWeight = linkFontWeight.value;
-        if (linkTextDecoration) properties.textDecoration = linkTextDecoration.value;
+        try {
+            if (linkText) properties.text = linkText.value;
+            if (linkUrl) properties.url = linkUrl.value;
+            if (linkTarget) properties.target = linkTarget.value;
+            if (linkTextColor) properties.textColor = linkTextColor.value;
+            if (linkTextColorValue) properties.textColor = linkTextColorValue.value;
+            if (linkFontSize) properties.fontSize = linkFontSize.value;
+            if (linkFontWeight) properties.fontWeight = linkFontWeight.value;
+            if (linkTextDecoration) properties.textDecoration = linkTextDecoration.value;
+        } catch(error) {
+            console.error('Error getting link component properties:', error);
+            showToast('Error getting link component properties. Please try again.', 'error');
+        }
         
         // Divider component properties
-        const dividerStyle = document.getElementById('divider-style');
-        const dividerColor = document.getElementById('divider-color');
-        const dividerThickness = document.getElementById('divider-thickness');
+        let dividerStyle, dividerColor, dividerThickness;
+        try {
+            dividerStyle = document.getElementById('divider-style');
+            dividerColor = document.getElementById('divider-color');
+            dividerThickness = document.getElementById('divider-thickness');
+        } catch(error) {
+            console.error('Error getting divider component elements:', error);
+            showToast('Error getting divider component elements. Please try again.', 'error');
+        }
         
-        if (dividerStyle) properties.style = dividerStyle.value;
-        if (dividerColor) properties.color = dividerColor.value;
-        if (dividerThickness) properties.thickness = dividerThickness.value;
+        try {
+            if (dividerStyle) properties.style = dividerStyle.value;
+            if (dividerColor) properties.color = dividerColor.value;
+            if (dividerThickness) properties.thickness = dividerThickness.value;
+        } catch(error) {
+            console.error('Error getting divider component properties:', error);
+            showToast('Error getting divider component properties. Please try again.', 'error');
+        }
         
         // Template component properties
-        const templateImage = document.getElementById('template-image');
-        const templateTitle = document.getElementById('template-title');
-        const templateDescription = document.getElementById('template-description');
-        const templatePrice = document.getElementById('template-price');
-        const templateButtonText = document.getElementById('template-button-text');
-        
-        if (templateImage) properties.image = templateImage.value;
-        if (templateTitle) properties.title = templateTitle.value;
-        if (templateDescription) properties.description = templateDescription.value;
-        if (templatePrice) {
-            // Convert formatted Rupiah string back to numeric value
-            properties.price = templatePrice.value.replace(/[.]/g, '');
+        try {
+            console.log('Getting template properties...');
+            const templateImage = document.getElementById('template-image');
+            const templateTitle = document.getElementById('template-title');
+            const templateDescription = document.getElementById('template-description');
+            const templatePrice = document.getElementById('template-price');
+            const templateButtonText = document.getElementById('template-button-text');
+            
+            if (templateImage) {
+                console.log('Template image:', templateImage.value);
+                properties.image = templateImage.value;
+            }
+            if (templateTitle) {
+                console.log('Template title:', templateTitle.value);
+                properties.title = templateTitle.value;
+            }
+            if (templateDescription) {
+                console.log('Template description:', templateDescription.value);
+                properties.description = templateDescription.value;
+            }
+            if (templatePrice) {
+                console.log('Raw template price:', templatePrice.value);
+                // Convert formatted Rupiah string back to numeric value
+                properties.price = parseInt(templatePrice.value.replace(/[^\d]/g, '')) || 0;
+                console.log('Converted price:', properties.price);
+            }
+            if (templateButtonText) {
+                console.log('Template button text:', templateButtonText.value);
+                properties.buttonText = templateButtonText.value;
+            }
+        } catch (error) {
+            console.error('Error getting template properties:', error);
+            showToast('Error getting template properties. Please try again.', 'error');
         }
-        if (templateButtonText) properties.buttonText = templateButtonText.value;
+        
+        // Get existing digital product info if it exists
+        try {
+            const componentElement = document.querySelector(`.component-wrapper[data-id="${currentComponentId}"]`);
+            if (componentElement) {
+                const existingProps = JSON.parse(componentElement.dataset.properties || '{}');
+                if (existingProps.digitalProduct) {
+                    properties.digitalProduct = existingProps.digitalProduct;
+                }
+            }
+        } catch (error) {
+            console.error('Error getting digital product properties:', error);
+            showToast('Error getting digital product properties. Please try again.', 'error');
+        }
         
         return properties;
     }
@@ -1466,14 +1717,22 @@
     }
     
     function saveComponentProperties() {
+        console.log('Saving component properties...');
+        console.log('Current component ID:', currentComponentId);
+        console.log('Current component type:', currentComponentType);
+        
         if (!currentComponentId || !currentComponentType) {
             console.error('No component selected');
             showToast('No component selected. Please try again.', 'error');
             return;
         }
         
-        // Get current property values (including any changes made in real-time preview)
-        let properties = getCurrentPropertyValues();
+        try {
+            // Get current property values (including any changes made in real-time preview)
+            let properties = getCurrentPropertyValues();
+            
+            // Log the properties being saved for debugging
+            console.log('Properties to be saved:', properties);
         
         // Update the component element's data-properties attribute
         const componentElement = document.querySelector(`.component-wrapper[data-id="${currentComponentId}"]`);
@@ -1481,17 +1740,23 @@
             componentElement.dataset.properties = JSON.stringify(properties);
         }
         
+        // Prepare request data
+        const requestData = {
+            properties: properties,
+            order: 0 // We'll keep the same order for now
+        };
+        
+        console.log('Sending request with data:', requestData);
+        
         // Update the component on the server
         fetch(`/cms/builder/${domainId}/component/${currentComponentId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
             },
-            body: JSON.stringify({
-                properties: properties,
-                order: 0 // We'll keep the same order for now
-            })
+            body: JSON.stringify(requestData)
         })
         .then(response => {
             // Check if response is JSON
@@ -1517,8 +1782,16 @@
         })
         .catch(error => {
             console.error('Error updating component:', error);
+            // Log additional error details
+            if (error.response) {
+                console.error('Response data:', error.response);
+            }
             showToast('Error updating component. Please try again.', 'error');
         });
+        } catch (error) {
+            console.error('Error in saveComponentProperties:', error);
+            showToast('Error preparing component data. Please try again.', 'error');
+        }
     }
     
     function updateComponentInDOM(component) {
@@ -1651,23 +1924,29 @@
                     contentElement.innerHTML = `<hr style="border: ${thickness} ${style} ${color};">`;
                     break;
                 case 'template':
-                    contentElement.innerHTML = `
-                        <div class="max-w-sm rounded overflow-hidden shadow-lg bg-white">
-                            <img class="w-full h-48 object-cover" src="${component.properties.image || 'https://placehold.co/400x300'}" alt="${component.properties.title || 'Template Image'}">
-                            <div class="px-6 py-4">
-                                <div class="font-bold text-xl mb-2">${component.properties.title || 'Template Title'}</div>
-                                <p class="text-gray-700 text-base">
-                                    ${component.properties.description || 'Template description goes here.'}
-                                </p>
+                    try {
+                        const price = component.properties.price ? parseInt(component.properties.price.toString().replace(/[^\d]/g, '')) : 0;
+                        contentElement.innerHTML = `
+                            <div class="max-w-sm rounded overflow-hidden shadow-lg bg-white">
+                                <img class="w-full h-48 object-cover" src="${component.properties.image || 'https://placehold.co/400x300'}" alt="${component.properties.title || 'Template Image'}">
+                                <div class="px-6 py-4">
+                                    <div class="font-bold text-xl mb-2">${component.properties.title || 'Template Title'}</div>
+                                    <p class="text-gray-700 text-base">
+                                        ${component.properties.description || 'Template description goes here.'}
+                                    </p>
+                                </div>
+                                <div class="px-6 pt-4 pb-2 flex justify-between items-center">
+                                    <span class="text-xl font-bold text-primary">Rp ${formatRupiahValue(price)}</span>
+                                    <a href="/checkout/${domainId}/${component.id}" class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded no-underline">
+                                        ${component.properties.buttonText || 'Buy Now'}
+                                    </a>
+                                </div>
                             </div>
-                            <div class="px-6 pt-4 pb-2 flex justify-between items-center">
-                                <span class="text-xl font-bold text-primary">Rp ${formatRupiahValue(component.properties.price || 0)}</span>
-                                <button class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded">
-                                    ${component.properties.buttonText || 'Buy Now'}
-                                </button>
-                            </div>
-                        </div>
-                    `;
+                        `;
+                    } catch (error) {
+                        console.error('Error updating template component:', error);
+                        showToast('Error updating template component. Please try again.', 'error');
+                    }
                     break;
                 default:
                     // Handle unknown component types gracefully
@@ -1967,6 +2246,24 @@
         }
     }
     
+    function switchTemplateImageTab(tab) {
+        // Switch active tab button
+        const tabButtons = document.querySelector('#properties-content').querySelectorAll('.tab-button');
+        tabButtons.forEach(button => {
+            button.classList.remove('active', 'bg-gray-100');
+        });
+        
+        if (tab === 'url') {
+            document.querySelector('[onclick="switchTemplateImageTab(\'url\')"]').classList.add('active', 'bg-gray-100');
+            document.getElementById('template-url-tab').classList.remove('hidden');
+            document.getElementById('template-upload-tab').classList.add('hidden');
+        } else {
+            document.querySelector('[onclick="switchTemplateImageTab(\'upload\')"]').classList.add('active', 'bg-gray-100');
+            document.getElementById('template-url-tab').classList.add('hidden');
+            document.getElementById('template-upload-tab').classList.remove('hidden');
+        }
+    }
+    
     function uploadImageFile() {
         const fileInput = document.getElementById('image-upload');
         const file = fileInput.files[0];
@@ -2037,6 +2334,215 @@
         xhr.send(formData);
     }
     
+    function uploadTemplateImageFile() {
+        const fileInput = document.getElementById('template-image-upload');
+        const file = fileInput.files[0];
+        
+        if (!file) {
+            showToast('Please select an image file first.', 'error');
+            return;
+        }
+        
+        // Show progress
+        document.getElementById('template-upload-progress').classList.remove('hidden');
+        document.getElementById('template-upload-button').classList.add('hidden');
+        
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        // Create XMLHttpRequest for progress tracking
+        const xhr = new XMLHttpRequest();
+        
+        // Update progress bar
+        xhr.upload.addEventListener('progress', function(e) {
+            if (e.lengthComputable) {
+                const percentComplete = (e.loaded / e.total) * 100;
+                document.getElementById('template-upload-progress-bar').style.width = percentComplete + '%';
+            }
+        });
+        
+        // Handle response
+        xhr.addEventListener('load', function() {
+            if (xhr.status === 200) {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.url) {
+                        // Update the image source field
+                        document.getElementById('template-image').value = response.url;
+                        showToast('Image uploaded successfully!', 'success');
+                    } else {
+                        showToast('Upload failed: ' + (response.error || 'Unknown error'), 'error');
+                    }
+                } catch (e) {
+                    showToast('Upload failed: Invalid response', 'error');
+                }
+            } else {
+                try {
+                    const errorResponse = JSON.parse(xhr.responseText);
+                    showToast('Upload failed: ' + (errorResponse.error || 'Server error'), 'error');
+                } catch (e) {
+                    showToast('Upload failed: Server error (HTTP ' + xhr.status + ')', 'error');
+                }
+            }
+            
+            // Hide progress
+            document.getElementById('template-upload-progress').classList.add('hidden');
+            document.getElementById('template-upload-button').classList.remove('hidden');
+        });
+        
+        xhr.addEventListener('error', function() {
+            showToast('Upload failed: Network error', 'error');
+            document.getElementById('template-upload-progress').classList.add('hidden');
+            document.getElementById('template-upload-button').classList.remove('hidden');
+        });
+        
+        // Send request
+        xhr.open('POST', `/cms/builder/${domainId}/upload-image`);
+        xhr.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+        xhr.send(formData);
+    }
+    
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function handleDigitalProductSelect(input) {
+        const file = input.files[0];
+        const uploadButton = document.getElementById('digital-product-upload-button');
+        
+        if (file) {
+            // Show file name and size
+            const fileName = document.createElement('div');
+            fileName.className = 'mt-2 text-sm text-gray-600';
+            fileName.textContent = `Selected file: ${file.name} (${formatFileSize(file.size)})`;
+            
+            // Remove any existing file info
+            const existingInfo = input.parentElement.querySelector('.selected-file-info');
+            if (existingInfo) {
+                existingInfo.remove();
+            }
+            
+            fileName.classList.add('selected-file-info');
+            input.parentElement.appendChild(fileName);
+            
+            // Show upload button
+            uploadButton.classList.remove('hidden');
+        } else {
+            // Hide upload button if no file is selected
+            uploadButton.classList.add('hidden');
+        }
+    }
+
+    function uploadDigitalProduct() {
+        const fileInput = document.getElementById('digital-product-upload');
+        const file = fileInput.files[0];
+        
+        if (!file) {
+            showToast('Please select a file first.', 'error');
+            return;
+        }
+        
+        // Show progress
+        document.getElementById('digital-product-upload-progress').classList.remove('hidden');
+        document.getElementById('digital-product-upload-button').classList.add('hidden');
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        // Create XMLHttpRequest for progress tracking
+        const xhr = new XMLHttpRequest();
+        
+        // Update progress bar
+        xhr.upload.addEventListener('progress', function(e) {
+            if (e.lengthComputable) {
+                const percentComplete = (e.loaded / e.total) * 100;
+                document.getElementById('digital-product-upload-progress-bar').style.width = percentComplete + '%';
+            }
+        });
+        
+        // Handle response
+        xhr.addEventListener('load', function() {
+            if (xhr.status === 200) {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    
+                    // Update the component's digital product properties
+                    const componentElement = document.querySelector(`.component-wrapper[data-id="${currentComponentId}"]`);
+                    if (componentElement) {
+                        const properties = JSON.parse(componentElement.dataset.properties || '{}');
+                        properties.digitalProduct = {
+                            path: response.path,
+                            originalName: response.originalName,
+                            fileType: response.fileType,
+                            fileSize: response.fileSize
+                        };
+                        componentElement.dataset.properties = JSON.stringify(properties);
+                    }
+
+                    // Show success message and update UI
+                    document.getElementById('digital-product-info').classList.remove('hidden');
+                    document.getElementById('digital-product-info').innerHTML = `
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Product file uploaded</span>
+                        </div>
+                        <p class="mt-1 text-xs">File size: ${formatFileSize(response.fileSize)}</p>
+                    `;
+                    showToast('Digital product uploaded successfully!', 'success');
+                } catch (e) {
+                    showToast('Upload failed: Invalid response', 'error');
+                }
+            } else {
+                try {
+                    const errorResponse = JSON.parse(xhr.responseText);
+                    showToast('Upload failed: ' + (errorResponse.error || 'Server error'), 'error');
+                } catch (e) {
+                    showToast('Upload failed: Server error (HTTP ' + xhr.status + ')', 'error');
+                }
+            }
+            
+            // Hide progress
+            document.getElementById('digital-product-upload-progress').classList.add('hidden');
+            document.getElementById('digital-product-upload-button').classList.remove('hidden');
+        });
+        
+        xhr.addEventListener('error', function() {
+            showToast('Upload failed: Network error', 'error');
+            document.getElementById('digital-product-upload-progress').classList.add('hidden');
+            document.getElementById('digital-product-upload-button').classList.remove('hidden');
+        });
+        
+        // Send request
+        xhr.open('POST', `/cms/builder/${domainId}/upload-digital-product`);
+        xhr.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+        xhr.send(formData);
+    }
+
+    // Handle digital product file selection
+    function handleDigitalProductFileSelect(input) {
+        const file = input.files[0];
+        const uploadButton = document.getElementById('digital-product-upload-button');
+        const filenameElement = document.getElementById('digital-product-filename');
+        
+        if (file) {
+            // Show filename and file size
+            filenameElement.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
+            
+            // Show upload button
+            uploadButton.classList.remove('hidden');
+        } else {
+            // Reset UI if no file selected
+            filenameElement.textContent = 'No file chosen';
+            uploadButton.classList.add('hidden');
+        }
+    }
+
     // Add event listener for file selection
     document.addEventListener('DOMContentLoaded', function() {
         // Add existing code...
@@ -2051,6 +2557,15 @@
                 } else {
                     document.getElementById('upload-filename').textContent = 'No file chosen';
                     document.getElementById('upload-button').classList.add('hidden');
+                }
+            } else if (e.target && e.target.id === 'template-image-upload') {
+                const file = e.target.files[0];
+                if (file) {
+                    document.getElementById('template-upload-filename').textContent = file.name;
+                    document.getElementById('template-upload-button').classList.remove('hidden');
+                } else {
+                    document.getElementById('template-upload-filename').textContent = 'No file chosen';
+                    document.getElementById('template-upload-button').classList.add('hidden');
                 }
             }
         });

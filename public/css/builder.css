@@ -1,0 +1,104 @@
+/* Builder specific styles */
+.component-wrapper {
+    position: relative;
+    transition: all 0.2s ease;
+    background-color: white;
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid transparent;
+}
+
+.component-wrapper:hover {
+    box-shadow: 0 0 0 2px #3b82f6;
+    border-color: #3b82f6;
+}
+
+.component-wrapper.selected {
+    box-shadow: 0 0 0 2px #3b82f6;
+    border-color: #3b82f6;
+}
+
+.component-item {
+    user-select: none;
+    cursor: move;
+    transition: all 0.2s ease;
+}
+
+.component-item:active {
+    opacity: 0.8;
+    transform: scale(0.98);
+}
+
+.component-item:hover {
+    background-color: #f3f4f6;
+}
+
+.component-item.dragging {
+    opacity: 0.5;
+}
+
+#canvas {
+    min-height: 400px;
+    transition: all 0.2s ease;
+}
+
+#canvas.drag-over {
+    background-color: #f0f9ff;
+    border-color: #3b82f6;
+}
+
+/* Properties panel */
+.properties-panel {
+    width: 320px;
+    transition: all 0.3s ease;
+}
+
+/* Resize handles */
+.resize-handle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: #3b82f6;
+    border: 1px solid white;
+    border-radius: 50%;
+    z-index: 10;
+}
+
+.resize-handle-nw { top: -5px; left: -5px; cursor: nw-resize; }
+.resize-handle-n { top: -5px; left: 50%; transform: translateX(-50%); cursor: n-resize; }
+.resize-handle-ne { top: -5px; right: -5px; cursor: ne-resize; }
+.resize-handle-e { top: 50%; right: -5px; transform: translateY(-50%); cursor: e-resize; }
+.resize-handle-se { bottom: -5px; right: -5px; cursor: se-resize; }
+.resize-handle-s { bottom: -5px; left: 50%; transform: translateX(-50%); cursor: s-resize; }
+.resize-handle-sw { bottom: -5px; left: -5px; cursor: sw-resize; }
+.resize-handle-w { top: 50%; left: -5px; transform: translateY(-50%); cursor: w-resize; }
+
+/* Toast notifications */
+.toast {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background-color: white;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    z-index: 50;
+    opacity: 0;
+    transform: translateY(1rem);
+    transition: all 0.3s ease;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast.success {
+    background-color: #34d399;
+    color: white;
+}
+
+.toast.error {
+    background-color: #ef4444;
+    color: white;
+}
