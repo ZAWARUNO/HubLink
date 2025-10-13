@@ -72,13 +72,22 @@ class BuilderController extends Controller
 
             $request->validate([
                 'properties' => 'required|array',
-                'order' => 'required|integer'
+                'order' => 'required|integer',
+                'digital_product_path' => 'nullable|string'
             ]);
 
-            $component->update([
+            // Prepare update data
+            $updateData = [
                 'properties' => $request->properties,
                 'order' => $request->order
-            ]);
+            ];
+
+            // Handle digital_product_path separately
+            if ($request->has('digital_product_path')) {
+                $updateData['digital_product_path'] = $request->digital_product_path;
+            }
+
+            $component->update($updateData);
 
             return response()->json($component);
         } catch (\Exception $e) {
@@ -219,8 +228,8 @@ class BuilderController extends Controller
                 return response()->json(['error' => 'Invalid file'], 400);
             }
 
-            // Store the file in a private disk
-            $filePath = $request->file('file')->store('digital-products', 'private');
+            // Store the file in local disk (storage/app/digital-products)
+            $filePath = $request->file('file')->store('digital-products', 'local');
 
             // Check if storage was successful
             if (!$filePath) {

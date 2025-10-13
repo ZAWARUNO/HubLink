@@ -211,7 +211,10 @@
                             <div class="component-wrapper relative group border border-transparent hover:border-dashed hover:border-gray-300 rounded p-2" 
                                  data-id="{{ $component->id }}" 
                                  data-type="{{ $component->type }}"
-                                 data-properties="{{ json_encode($component->properties) }}">
+                                 data-properties="{{ json_encode($component->properties) }}"
+                                 @if($component->digital_product_path)
+                                 data-digital-product-path="{{ $component->digital_product_path }}"
+                                 @endif>
                                 <div class="component-content">
                                     @switch($component->type)
                                         @case('text')
@@ -974,6 +977,16 @@
         } catch (e) {
             console.error('Error parsing component properties:', e);
             properties = {};
+        }
+        
+        // If component has digital_product_path in dataset, sync it to properties
+        if (component.dataset.digitalProductPath && !properties.digitalProduct) {
+            properties.digitalProduct = {
+                path: component.dataset.digitalProductPath,
+                originalName: 'Uploaded Product',
+                fileType: 'unknown',
+                fileSize: 0
+            };
         }
         
         let html = '';
@@ -1740,10 +1753,19 @@
             componentElement.dataset.properties = JSON.stringify(properties);
         }
         
+        // Extract digital_product_path from properties if exists
+        let digitalProductPath = null;
+        if (properties.digitalProduct && properties.digitalProduct.path) {
+            digitalProductPath = properties.digitalProduct.path;
+            // Remove digitalProduct from properties to avoid duplication
+            // Keep it in properties for backward compatibility but also send separately
+        }
+        
         // Prepare request data
         const requestData = {
             properties: properties,
-            order: 0 // We'll keep the same order for now
+            order: 0, // We'll keep the same order for now
+            digital_product_path: digitalProductPath
         };
         
         console.log('Sending request with data:', requestData);
@@ -1812,6 +1834,11 @@
         // Update the properties data attribute
         componentElement.dataset.properties = JSON.stringify(component.properties);
         componentElement.dataset.type = component.type;
+        
+        // Update digital_product_path if exists
+        if (component.digital_product_path) {
+            componentElement.dataset.digitalProductPath = component.digital_product_path;
+        }
         
         // Update the component content
         const contentElement = componentElement.querySelector('.component-content');

@@ -13,6 +13,7 @@ class Component extends Model
         'domain_id',
         'type',
         'properties',
+        'digital_product_path',
         'order',
         'is_published'
     ];

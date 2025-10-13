@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Checkout - {{ $domain->name }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('services.midtrans.client_key') }}"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -92,8 +94,8 @@
                                 @enderror
                             </div>
 
-                            <button type="submit" class="w-full bg-primary hover:bg-primary-dark text-white font-semibold py-3 rounded-lg transition-colors">
-                                Place Order
+                            <button type="submit" id="pay-button" class="w-full bg-primary hover:bg-primary-dark text-white font-semibold py-3 rounded-lg transition-colors">
+                                Proceed to Payment
                             </button>
                         </div>
                     </form>
@@ -101,5 +103,65 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            const payButton = document.getElementById('pay-button');
+            
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Disable button and show loading
+                payButton.disabled = true;
+                payButton.textContent = 'Processing...';
+                
+                // Get form data
+                const formData = new FormData(form);
+                
+                // Send AJAX request
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Open Midtrans Snap popup
+                        snap.pay(data.snap_token, {
+                            onSuccess: function(result) {
+                                window.location.href = '/payment/success/' + data.order_id;
+                            },
+                            onPending: function(result) {
+                                window.location.href = '/payment/success/' + data.order_id;
+                            },
+                            onError: function(result) {
+                                window.location.href = '/payment/failed/' + data.order_id;
+                            },
+                            onClose: function() {
+                                // Re-enable button
+                                payButton.disabled = false;
+                                payButton.textContent = 'Proceed to Payment';
+                            }
+                        });
+                    } else {
+                        alert('Error: ' + data.message);
+                        payButton.disabled = false;
+                        payButton.textContent = 'Proceed to Payment';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please try again.');
+                    payButton.disabled = false;
+                    payButton.textContent = 'Proceed to Payment';
+                });
+            });
+        });
+    </script>
 </body>
 </html>

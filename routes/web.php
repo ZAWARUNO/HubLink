@@ -6,6 +6,8 @@ use App\Http\Controllers\CMS\HomeController as CmsHomeController;
 use App\Http\Controllers\CMS\DomainController as CmsDomainController;
 use App\Http\Controllers\CMS\BuilderController as CmsBuilderController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\PaymentCallbackController;
+use App\Http\Controllers\DigitalProductController;
 use App\Models\Domain;
 
 Route::get('/', function () {
@@ -49,6 +51,15 @@ Route::middleware('auth')->prefix('cms')->name('cms.')->group(function () {
 // Checkout routes
 Route::get('/{domain}/checkout/{componentId}', [CheckoutController::class, 'show'])->name('checkout.show');
 Route::post('/{domain}/checkout/{componentId}', [CheckoutController::class, 'process'])->name('checkout.process');
+
+// Payment callback and result pages
+Route::post('/payment/callback', [PaymentCallbackController::class, 'handle'])->name('payment.callback');
+Route::get('/payment/success/{orderId}', [CheckoutController::class, 'success'])->name('payment.success');
+Route::get('/payment/failed/{orderId}', [CheckoutController::class, 'failed'])->name('payment.failed');
+
+// Digital product download routes
+Route::get('/download/{orderId}', [DigitalProductController::class, 'showDownloadPage'])->name('digital-product.page');
+Route::get('/download/{orderId}/{token}', [DigitalProductController::class, 'download'])->name('digital-product.download');
 
 // Public profile by slug
 Route::get('/{slug}', function (string $slug) {
