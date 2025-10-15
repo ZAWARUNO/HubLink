@@ -183,7 +183,7 @@
                     </svg>
                     <span>Divider</span>
                 </div>
-                <div draggable="true" data-type="template" class="component-item p-3 border rounded-lg cursor-move hover:bg-gray-50 flex items-center gap-2 transition-colors duration-200">
+                <div data-type="template" class="component-item p-3 border rounded-lg cursor-pointer hover:bg-gray-50 flex items-center gap-2 transition-colors duration-200">
                     <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                     </svg>
@@ -321,34 +321,6 @@
                                             <hr class="border-gray-300">
                                             @break
                                         @case('template')
-                                            @php
-                                                $isEmpty = isset($component->properties['isEmpty']) && $component->properties['isEmpty'] === true;
-                                            @endphp
-                                            @if($isEmpty)
-                                            <div class="max-w-sm rounded overflow-hidden shadow-lg bg-white border-2 border-dashed border-gray-300">
-                                                <div class="bg-gray-100 h-48 flex items-center justify-center">
-                                                    <div class="text-center p-4">
-                                                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                                                        </svg>
-                                                        <h3 class="mt-2 text-sm font-medium text-gray-900">Empty Template</h3>
-                                                        <p class="mt-1 text-sm text-gray-500">No product added</p>
-                                                    </div>
-                                                </div>
-                                                <div class="px-6 py-4">
-                                                    <div class="font-bold text-xl mb-2 text-gray-400">No Product</div>
-                                                    <p class="text-gray-500 text-base">
-                                                        <a href="/cms/products" class="text-primary hover:underline">Add products in the product page</a>
-                                                    </p>
-                                                </div>
-                                                <div class="px-6 pt-4 pb-2 flex justify-between items-center">
-                                                    <span class="text-xl font-bold text-primary">Rp 0</span>
-                                                    <button class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded">
-                                                        Add Product
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            @else
                                             <div class="max-w-sm rounded overflow-hidden shadow-lg bg-white">
                                                 <img class="w-full h-48 object-cover" src="{{ $component->properties['image'] ?? 'https://placehold.co/400x300' }}" alt="{{ $component->properties['title'] ?? 'Template Image' }}">
                                                 <div class="px-6 py-4">
@@ -364,7 +336,6 @@
                                                     </a>
                                                 </div>
                                             </div>
-                                            @endif
                                             @break
                                     @endswitch
                                 </div>
@@ -437,6 +408,33 @@
                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
             </svg>
         </button>
+    </div>
+</div>
+
+<!-- Template Product Selection Modal -->
+<div id="template-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+            <h3 class="text-lg font-semibold text-gray-900">Select Template Product</h3>
+            <button onclick="closeTemplateModal()" class="text-gray-400 hover:text-gray-500">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="p-6 overflow-y-auto flex-1">
+            <div id="template-products-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Template products will be loaded here -->
+                <div class="text-center py-8 text-gray-500">
+                    <p>Loading template products...</p>
+                </div>
+            </div>
+        </div>
+        <div class="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex justify-end">
+            <button onclick="closeTemplateModal()" class="px-4 py-2 text-gray-700 hover:text-gray-900">
+                Close
+            </button>
+        </div>
     </div>
 </div>
 
@@ -518,15 +516,10 @@
         componentItems.forEach(item => {
             // Special handling for template component
             if (item.dataset.type === 'template') {
-                // Tambahkan event listener untuk klik
                 item.addEventListener('click', function(e) {
                     e.preventDefault();
                     openTemplateModal();
                 });
-                
-                // Tambahkan event listener untuk drag
-                item.addEventListener('dragstart', dragStart);
-                item.addEventListener('dragend', dragEnd);
             } else {
                 item.addEventListener('dragstart', dragStart);
                 item.addEventListener('dragend', dragEnd);
@@ -542,9 +535,6 @@
             canvas.addEventListener('dragleave', dragLeave);
             canvas.addEventListener('drop', drop);
         }
-        
-        // Inisialisasi event listener untuk template kosong yang sudah ada
-        initializeEmptyTemplateListeners();
         
         // Initialize SortableJS for component reordering
         if (typeof Sortable !== 'undefined' && canvas) {
@@ -574,35 +564,6 @@
     });
     
     // Observe changes to the canvas to reattach event listeners when needed
-    // Fungsi untuk menginisialisasi event listener untuk template kosong yang sudah ada
-    function initializeEmptyTemplateListeners() {
-        // Temukan semua template kosong
-        const emptyTemplates = document.querySelectorAll('.component-wrapper[data-type="template"]');
-        
-        emptyTemplates.forEach(template => {
-            try {
-                const properties = JSON.parse(template.dataset.properties || '{}');
-                if (properties.isEmpty === true) {
-                    // Tambahkan event listener untuk klik
-                    template.addEventListener('click', function() {
-                        handleEmptyTemplateClick(this);
-                    });
-                }
-            } catch (e) {
-                console.error('Error parsing template properties:', e);
-            }
-        });
-        
-        // Also handle empty templates with the specific class
-        const emptyTemplateComponents = document.querySelectorAll('.empty-template-component');
-        emptyTemplateComponents.forEach(component => {
-            component.addEventListener('click', function(e) {
-                e.stopPropagation();
-                handleEmptyTemplateClick(component);
-            });
-        });
-    }
-    
     function observeCanvasChanges() {
         const canvas = document.getElementById('canvas');
         if (!canvas) return;
@@ -621,9 +582,6 @@
                     canvas.addEventListener('dragenter', dragEnter);
                     canvas.addEventListener('dragleave', dragLeave);
                     canvas.addEventListener('drop', drop);
-                    
-                    // Inisialisasi ulang event listener untuk template kosong
-                    initializeEmptyTemplateListeners();
                 }
             });
         });
@@ -648,8 +606,6 @@
         
         try {
             e.dataTransfer.setData('text/plain', e.target.dataset.type);
-            // Tambahkan flag untuk menandai ini adalah operasi drag
-            e.dataTransfer.setData('isDragOperation', 'true');
             e.dataTransfer.effectAllowed = 'copy';
             
             // Add visual feedback
@@ -736,24 +692,23 @@
         
         try {
             const type = e.dataTransfer.getData('text/plain');
-            // Periksa apakah ini adalah operasi drag
-            const isDragOperation = e.dataTransfer.getData('isDragOperation');
             console.log('Dropped component type:', type);
             
             if (type) {
-                // Jika ini adalah template dan operasi drag, buat template kosong
-                if (type === 'template' && isDragOperation === 'true') {
-                    addComponentToCanvas(type, true); // true menandakan template kosong
-                } else {
-                    addComponentToCanvas(type);
-                }
+                addComponentToCanvas(type);
             }
         } catch (error) {
             console.error('Error in drop function:', error);
         }
     }
     
-    function addComponentToCanvas(type, isEmptyTemplate = false) {
+    function addComponentToCanvas(type) {
+        // Special handling for template component
+        if (type === 'template') {
+            openTemplateModal();
+            return;
+        }
+        
         // Remove empty canvas message if it exists
         const emptyMessage = document.getElementById('empty-canvas-message');
         if (emptyMessage) {
@@ -797,53 +752,23 @@
                 componentHtml = `<hr class="border-gray-300">`;
                 break;
             case 'template':
-                if (isEmptyTemplate) {
-                    // Template kosong dengan tampilan khusus
-                    componentHtml = `
-                        <div class="max-w-sm rounded overflow-hidden shadow-lg bg-white border-2 border-dashed border-gray-300 cursor-pointer empty-template-component" onclick="handleEmptyTemplateClick(this)">
-                            <div class="bg-gray-100 h-48 flex items-center justify-center">
-                                <div class="text-center p-4">
-                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                                    </svg>
-                                    <h3 class="mt-2 text-sm font-medium text-gray-900">Empty Template</h3>
-                                    <p class="mt-1 text-sm text-gray-500">Click to add product</p>
-                                </div>
-                            </div>
-                            <div class="px-6 py-4">
-                                <div class="font-bold text-xl mb-2 text-gray-400">No Product</div>
-                                <p class="text-gray-500 text-base">
-                                    <a href="/cms/products" class="text-primary hover:underline">Add products in the product page</a>
-                                </p>
-                            </div>
-                            <div class="px-6 pt-4 pb-2 flex justify-between items-center">
-                                <span class="text-xl font-bold text-primary">Rp 0</span>
-                                <button class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded">
-                                    Add Product
-                                </button>
-                            </div>
+                componentHtml = `
+                    <div class="max-w-sm rounded overflow-hidden shadow-lg bg-white">
+                        <img class="w-full h-48 object-cover" src="https://placehold.co/400x300" alt="Template Image">
+                        <div class="px-6 py-4">
+                            <div class="font-bold text-xl mb-2">Template Title</div>
+                            <p class="text-gray-700 text-base">
+                                Template description goes here.
+                            </p>
                         </div>
-                    `;
-                } else {
-                    // Template biasa
-                    componentHtml = `
-                        <div class="max-w-sm rounded overflow-hidden shadow-lg bg-white">
-                            <img class="w-full h-48 object-cover" src="https://placehold.co/400x300" alt="Template Image">
-                            <div class="px-6 py-4">
-                                <div class="font-bold text-xl mb-2">Template Title</div>
-                                <p class="text-gray-700 text-base">
-                                    Template description goes here.
-                                </p>
-                            </div>
-                            <div class="px-6 pt-4 pb-2 flex justify-between items-center">
-                                <span class="text-xl font-bold text-primary">Rp 0</span>
-                                <button class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded">
-                                    Buy Now
-                                </button>
-                            </div>
+                        <div class="px-6 pt-4 pb-2 flex justify-between items-center">
+                            <span class="text-xl font-bold text-primary">Rp 0</span>
+                            <button class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded">
+                                Buy Now
+                            </button>
                         </div>
-                    `;
-                }
+                    </div>
+                `;
                 break;
             default:
                 componentHtml = `<div class="text-red-500 p-2">Unknown component type: ${type}</div>`;
@@ -880,24 +805,6 @@
             addResizeHandles(componentWrapper);
         }
         
-        // Jika ini adalah template kosong, simpan ke database dengan flag isEmpty
-        if (type === 'template' && isEmptyTemplate) {
-            // Tambahkan flag isEmpty ke properties
-            const properties = JSON.parse(componentWrapper.dataset.properties || '{}');
-            properties.isEmpty = true;
-            componentWrapper.dataset.properties = JSON.stringify(properties);
-            
-            // Simpan ke server dengan flag isEmpty
-            saveEmptyTemplateComponent(type, componentWrapper);
-            
-            // Tambahkan event listener untuk template kosong
-            componentWrapper.addEventListener('click', function() {
-                handleEmptyTemplateClick(this);
-            });
-            
-            return;
-        }
-        
         // Save component to server
         saveComponent(type, componentWrapper);
     }
@@ -911,12 +818,6 @@
             console.error('Component not found in canvas');
             showToast('Error saving component. Please try again.', 'error');
             componentElement.remove();
-            return;
-        }
-        
-        // If this is an empty template, don't save it to the server
-        if (type === 'template' && properties.isEmpty === true) {
-            console.log('Skipping save for empty template');
             return;
         }
         
@@ -983,119 +884,6 @@
         });
     }
     
-    function saveEmptyTemplateComponent(type, componentElement) {
-        const order = Array.from(document.getElementById('canvas').children).indexOf(componentElement);
-        const properties = JSON.parse(componentElement.dataset.properties || '{}');
-        
-        // Validasi order
-        if (order === -1) {
-            console.error('Component not found in canvas');
-            showToast('Error saving component. Please try again.', 'error');
-            componentElement.remove();
-            return;
-        }
-        
-        fetch(`/cms/builder/${domainId}/component`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify({
-                type: type,
-                properties: properties,
-                order: order
-            })
-        })
-        .then(response => {
-            // Check if response is JSON
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                throw new Error('Received non-JSON response: ' + response.status + ' ' + response.statusText);
-            }
-            
-            if (!response.ok) {
-                throw new Error('Network response was not ok: ' + response.status + ' ' + response.statusText);
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Validasi data yang diterima
-            if (!data || !data.id) {
-                throw new Error('Invalid response data');
-            }
-            
-            // Update the component with the real ID from the server
-            const tempId = componentElement.dataset.id;
-            componentElement.dataset.id = data.id;
-            
-            // Update the onclick handlers with the real ID
-            const editButton = componentElement.querySelector('button[onclick*="editComponent"]');
-            const deleteButton = componentElement.querySelector('button[onclick*="deleteComponent"]');
-            
-            if (editButton) {
-                editButton.setAttribute('onclick', `editComponent(${data.id})`);
-            }
-            
-            if (deleteButton) {
-                deleteButton.setAttribute('onclick', `deleteComponent(${data.id})`);
-            }
-            
-            // Show success message
-            showToast('Empty template added successfully!', 'success');
-        })
-        .catch(error => {
-            console.error('Error saving empty template:', error);
-            showToast('Error saving empty template. Please try again.', 'error');
-            // Remove the component from DOM if save failed
-            try {
-                if (componentElement.parentNode) {
-                    componentElement.remove();
-                }
-            } catch (e) {
-                console.error('Error removing component element:', e);
-            }
-        });
-    }
-    
-    // Fungsi untuk menangani klik pada template kosong
-    function handleEmptyTemplateClick(element) {
-        // Temukan wrapper component
-        const componentWrapper = element.closest ? element.closest('.component-wrapper') : element;
-        if (!componentWrapper) return;
-        
-        // Get component ID
-        const componentId = componentWrapper.dataset.id;
-        if (!componentId) return;
-        
-        // Set current component and open properties panel
-        currentComponentId = componentId;
-        currentComponentType = 'template';
-        
-        // Remove selected class from all components
-        document.querySelectorAll('.component-wrapper').forEach(comp => {
-            comp.classList.remove('selected');
-        });
-        
-        // Add selected class to current component
-        componentWrapper.classList.add('selected');
-        
-        // Show properties panel
-        const propertiesPanel = document.getElementById('properties-panel');
-        if (propertiesPanel) {
-            propertiesPanel.classList.remove('hidden');
-        }
-        
-        // Load properties for empty template
-        loadProperties(componentWrapper);
-        
-        showToast('Fill in the product details in the properties panel to create a new product.', 'info');
-    }
-    
-    // Template kosong tidak lagi memerlukan fungsi khusus karena tidak disimpan ke database
-    
-    // Fungsi updateComponentOnServer dihapus karena template kosong tidak disimpan ke database
-    
     function getDefaultProperties(type) {
         // Validasi parameter
         if (!type) {
@@ -1161,8 +949,7 @@
                         originalName: '',
                         fileType: '',
                         fileSize: 0
-                    },
-                    isEmpty: false // Default tidak kosong
+                    }
                 };
             default:
                 console.warn('Unknown component type:', type);
@@ -1524,205 +1311,94 @@
                 `;
                 break;
             case 'template':
-                // Check if this is an empty template
-                const isEmptyTemplate = properties.isEmpty === true;
-                
-                if (isEmptyTemplate) {
-                    html = `
-                        <div class="space-y-4">
-                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                <div class="flex items-center">
-                                    <svg class="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                    <span class="text-sm font-medium text-blue-800">Empty Template</span>
-                                </div>
-                                <p class="text-sm text-blue-700 mt-1">Fill in the product details below to create a new product automatically.</p>
+                html = `
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Image</label>
+                            <div class="flex gap-2 mb-2">
+                                <button type="button" class="tab-button active px-3 py-1 text-sm rounded-md bg-gray-100" onclick="switchTemplateImageTab('url')">URL</button>
+                                <button type="button" class="tab-button px-3 py-1 text-sm rounded-md" onclick="switchTemplateImageTab('upload')">Upload</button>
                             </div>
                             
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
-                                <div class="flex gap-2 mb-2">
-                                    <button type="button" class="tab-button active px-3 py-1 text-sm rounded-md bg-gray-100" onclick="switchTemplateImageTab('url')">URL</button>
-                                    <button type="button" class="tab-button px-3 py-1 text-sm rounded-md" onclick="switchTemplateImageTab('upload')">Upload</button>
+                            <!-- URL Tab -->
+                            <div id="template-url-tab" class="tab-content">
+                                <input type="text" id="template-image" value="${properties.image || 'https://placehold.co/400x300'}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="https://example.com/image.jpg">
+                            </div>
+                            
+                            <!-- Upload Tab -->
+                            <div id="template-upload-tab" class="tab-content hidden">
+                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                                    <input type="file" id="template-image-upload" accept="image/*" class="hidden">
+                                    <button type="button" onclick="document.getElementById('template-image-upload').click()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700">
+                                        Choose Image
+                                    </button>
+                                    <p id="template-upload-filename" class="mt-2 text-sm text-gray-500">No file chosen</p>
+                                    <button type="button" id="template-upload-button" onclick="uploadTemplateImageFile()" class="mt-2 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-md hidden">
+                                        Upload Image
+                                    </button>
+                                    <p class="mt-2 text-xs text-gray-500">Upload file gambar dibawah 2MB</p>
                                 </div>
-                                
-                                <!-- URL Tab -->
-                                <div id="template-url-tab" class="tab-content">
-                                    <input type="text" id="template-image" value="${properties.image || 'https://placehold.co/400x300'}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="https://example.com/image.jpg">
-                                </div>
-                                
-                                <!-- Upload Tab -->
-                                <div id="template-upload-tab" class="tab-content hidden">
-                                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                                        <input type="file" id="template-image-upload" accept="image/*" class="hidden">
-                                        <button type="button" onclick="document.getElementById('template-image-upload').click()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700">
-                                            Choose Image
-                                        </button>
-                                        <p id="template-upload-filename" class="mt-2 text-sm text-gray-500">No file chosen</p>
-                                        <button type="button" id="template-upload-button" onclick="uploadTemplateImageFile()" class="mt-2 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-md hidden">
-                                            Upload Image
-                                        </button>
-                                        <p class="mt-2 text-xs text-gray-500">Upload file gambar dibawah 2MB</p>
-                                    </div>
-                                    <div id="template-upload-progress" class="mt-2 hidden">
-                                        <div class="w-full bg-gray-200 rounded-full h-2">
-                                            <div id="template-upload-progress-bar" class="bg-primary h-2 rounded-full" style="width: 0%"></div>
-                                        </div>
+                                <div id="template-upload-progress" class="mt-2 hidden">
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div id="template-upload-progress-bar" class="bg-primary h-2 rounded-full" style="width: 0%"></div>
                                     </div>
                                 </div>
                             </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Product Name *</label>
-                                <input type="text" id="template-title" value="${properties.title || ''}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Enter product name" required>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-                                <textarea id="template-description" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" rows="3" placeholder="Enter product description" required>${properties.description || ''}</textarea>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Price (Rp) *</label>
-                                <input type="text" id="template-price" value="${formatRupiahValue(properties.price) || '0'}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" oninput="formatRupiah(this)" placeholder="0" required>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Button Text</label>
-                                <input type="text" id="template-button-text" value="${properties.buttonText || 'Buy Now'}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Buy Now">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Digital Product File</label>
-                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                                    <input type="file" id="digital-product-upload" onchange="handleDigitalProductSelect(this)" class="hidden" accept=".pdf,.zip,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif">
-                                    <div class="text-center">
-                                        <button type="button" onclick="document.getElementById('digital-product-upload').click()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700">
-                                            Choose Digital Product
-                                        </button>
-                                        <p id="digital-product-filename" class="mt-2 text-sm text-gray-500">
-                                            ${properties.digitalProduct && properties.digitalProduct.originalName ? properties.digitalProduct.originalName : 'No file chosen'}
-                                        </p>
-                                        <button type="button" id="digital-product-upload-button" onclick="uploadDigitalProduct()" class="mt-2 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-md hidden">
-                                            Upload Product
-                                        </button>
-                                        <p class="mt-2 text-xs text-gray-500">Upload PDF, ZIP, DOC, XLS, or image files (max 10MB)</p>
-                                    </div>
-                                    <div id="digital-product-upload-progress" class="mt-2 hidden">
-                                        <div class="w-full bg-gray-200 rounded-full h-2">
-                                            <div id="digital-product-upload-progress-bar" class="bg-primary h-2 rounded-full" style="width: 0%"></div>
-                                        </div>
-                                    </div>
-                                    <div id="digital-product-info" class="mt-2 text-sm text-gray-600 ${properties.digitalProduct && properties.digitalProduct.path ? '' : 'hidden'}">
-                                        <div class="flex items-center gap-2">
-                                            <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                            </svg>
-                                            <span>Product file uploaded</span>
-                                        </div>
-                                        ${properties.digitalProduct && properties.digitalProduct.fileSize ? 
-                                            `<p class="mt-1 text-xs">File size: ${formatFileSize(properties.digitalProduct.fileSize)}</p>` : ''}
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <button onclick="saveEmptyTemplateAsProduct()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg mt-4">
-                                Create Product & Update Template
-                            </button>
                         </div>
-                    `;
-                } else {
-                    // Regular template properties (existing code)
-                    html = `
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Image</label>
-                                <div class="flex gap-2 mb-2">
-                                    <button type="button" class="tab-button active px-3 py-1 text-sm rounded-md bg-gray-100" onclick="switchTemplateImageTab('url')">URL</button>
-                                    <button type="button" class="tab-button px-3 py-1 text-sm rounded-md" onclick="switchTemplateImageTab('upload')">Upload</button>
-                                </div>
-                                
-                                <!-- URL Tab -->
-                                <div id="template-url-tab" class="tab-content">
-                                    <input type="text" id="template-image" value="${properties.image || 'https://placehold.co/400x300'}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="https://example.com/image.jpg">
-                                </div>
-                                
-                                <!-- Upload Tab -->
-                                <div id="template-upload-tab" class="tab-content hidden">
-                                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                                        <input type="file" id="template-image-upload" accept="image/*" class="hidden">
-                                        <button type="button" onclick="document.getElementById('template-image-upload').click()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700">
-                                            Choose Image
-                                        </button>
-                                        <p id="template-upload-filename" class="mt-2 text-sm text-gray-500">No file chosen</p>
-                                        <button type="button" id="template-upload-button" onclick="uploadTemplateImageFile()" class="mt-2 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-md hidden">
-                                            Upload Image
-                                        </button>
-                                        <p class="mt-2 text-xs text-gray-500">Upload file gambar dibawah 2MB</p>
-                                    </div>
-                                    <div id="template-upload-progress" class="mt-2 hidden">
-                                        <div class="w-full bg-gray-200 rounded-full h-2">
-                                            <div id="template-upload-progress-bar" class="bg-primary h-2 rounded-full" style="width: 0%"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                                <input type="text" id="template-title" value="${properties.title || 'Template Title'}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                                <textarea id="template-description" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" rows="3">${properties.description || 'Template description goes here.'}</textarea>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Price (Rp)</label>
-                                <input type="text" id="template-price" value="${formatRupiahValue(properties.price) || '0'}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" oninput="formatRupiah(this)">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Button Text</label>
-                                <input type="text" id="template-button-text" value="${properties.buttonText || 'Buy Now'}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Digital Product</label>
-                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                                    <input type="file" id="digital-product-upload" onchange="handleDigitalProductSelect(this)" class="hidden" accept=".pdf,.zip,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif">
-                                    <div class="text-center">
-                                        <button type="button" onclick="document.getElementById('digital-product-upload').click()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700">
-                                            Choose Digital Product
-                                        </button>
-                                        <p id="digital-product-filename" class="mt-2 text-sm text-gray-500">
-                                            ${properties.digitalProduct && properties.digitalProduct.originalName ? properties.digitalProduct.originalName : 'No file chosen'}
-                                        </p>
-                                        <button type="button" id="digital-product-upload-button" onclick="uploadDigitalProduct()" class="mt-2 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-md hidden">
-                                            Upload Product
-                                        </button>
-                                        <p class="mt-2 text-xs text-gray-500">Upload PDF, ZIP, DOC, XLS, or image files (max 10MB)</p>
-                                    </div>
-                                    <div id="digital-product-upload-progress" class="mt-2 hidden">
-                                        <div class="w-full bg-gray-200 rounded-full h-2">
-                                            <div id="digital-product-upload-progress-bar" class="bg-primary h-2 rounded-full" style="width: 0%"></div>
-                                        </div>
-                                    </div>
-                                    <div id="digital-product-info" class="mt-2 text-sm text-gray-600 ${properties.digitalProduct && properties.digitalProduct.path ? '' : 'hidden'}">
-                                        <div class="flex items-center gap-2">
-                                            <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                            </svg>
-                                            <span>Product file uploaded</span>
-                                        </div>
-                                        ${properties.digitalProduct && properties.digitalProduct.fileSize ? 
-                                            `<p class="mt-1 text-xs">File size: ${formatFileSize(properties.digitalProduct.fileSize)}</p>` : ''}
-                                    </div>
-                                </div>
-                            </div>
-                            <button onclick="saveComponentProperties()" class="w-full bg-primary hover:bg-primary-dark text-white py-2 rounded-lg mt-4">
-                                Save Changes
-                            </button>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                            <input type="text" id="template-title" value="${properties.title || 'Template Title'}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
                         </div>
-                    `;
-                }
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea id="template-description" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" rows="3">${properties.description || 'Template description goes here.'}</textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Price (Rp)</label>
+                            <input type="text" id="template-price" value="${formatRupiahValue(properties.price) || '0'}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" oninput="formatRupiah(this)">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Button Text</label>
+                            <input type="text" id="template-button-text" value="${properties.buttonText || 'Buy Now'}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Digital Product</label>
+                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                                <input type="file" id="digital-product-upload" onchange="handleDigitalProductSelect(this)" class="hidden" accept=".pdf,.zip,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif">
+                                <div class="text-center">
+                                    <button type="button" onclick="document.getElementById('digital-product-upload').click()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700">
+                                        Choose Digital Product
+                                    </button>
+                                    <p id="digital-product-filename" class="mt-2 text-sm text-gray-500">
+                                        ${properties.digitalProduct && properties.digitalProduct.originalName ? properties.digitalProduct.originalName : 'No file chosen'}
+                                    </p>
+                                    <button type="button" id="digital-product-upload-button" onclick="uploadDigitalProduct()" class="mt-2 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-md hidden">
+                                        Upload Product
+                                    </button>
+                                    <p class="mt-2 text-xs text-gray-500">Upload PDF, ZIP, DOC, XLS, or image files (max 10MB)</p>
+                                </div>
+                                <div id="digital-product-upload-progress" class="mt-2 hidden">
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div id="digital-product-upload-progress-bar" class="bg-primary h-2 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div id="digital-product-info" class="mt-2 text-sm text-gray-600 ${properties.digitalProduct && properties.digitalProduct.path ? '' : 'hidden'}">
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        <span>Product file uploaded</span>
+                                    </div>
+                                    ${properties.digitalProduct && properties.digitalProduct.fileSize ? 
+                                        `<p class="mt-1 text-xs">File size: ${formatFileSize(properties.digitalProduct.fileSize)}</p>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="saveComponentProperties()" class="w-full bg-primary hover:bg-primary-dark text-white py-2 rounded-lg mt-4">
+                            Save Changes
+                        </button>
+                    </div>
+                `;
                 break;
             default:
                 html = '<p class="text-red-500">No properties to edit for this component type.</p>';
@@ -1933,15 +1609,6 @@
                 console.log('Template button text:', templateButtonText.value);
                 properties.buttonText = templateButtonText.value;
             }
-            
-            // Check if this is an empty template
-            const componentElement = document.querySelector(`.component-wrapper[data-id="${currentComponentId}"]`);
-            if (componentElement) {
-                const existingProps = JSON.parse(componentElement.dataset.properties || '{}');
-                if (existingProps.isEmpty === true) {
-                    properties.isEmpty = true;
-                }
-            }
         } catch (error) {
             console.error('Error getting template properties:', error);
             showToast('Error getting template properties. Please try again.', 'error');
@@ -2082,52 +1749,23 @@
                 contentElement.innerHTML = `<hr style="border: ${thickness} ${style} ${color};">`;
                 break;
             case 'template':
-                // Check if this is an empty template
-                if (properties.isEmpty === true) {
-                    contentElement.innerHTML = `
-                        <div class="max-w-sm rounded overflow-hidden shadow-lg bg-white border-2 border-dashed border-gray-300 cursor-pointer empty-template-component" onclick="handleEmptyTemplateClick(this)">
-                            <div class="bg-gray-100 h-48 flex items-center justify-center">
-                                <div class="text-center p-4">
-                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                                    </svg>
-                                    <h3 class="mt-2 text-sm font-medium text-gray-900">Empty Template</h3>
-                                    <p class="mt-1 text-sm text-gray-500">Click to add product</p>
-                                </div>
-                            </div>
-                            <div class="px-6 py-4">
-                                <div class="font-bold text-xl mb-2 text-gray-400">No Product</div>
-                                <p class="text-gray-500 text-base">
-                                    <a href="/cms/products" class="text-primary hover:underline">Add products in the product page</a>
-                                </p>
-                            </div>
-                            <div class="px-6 pt-4 pb-2 flex justify-between items-center">
-                                <span class="text-xl font-bold text-primary">Rp 0</span>
-                                <button class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded">
-                                    Add Product
-                                </button>
-                            </div>
+                contentElement.innerHTML = `
+                    <div class="max-w-sm rounded overflow-hidden shadow-lg bg-white">
+                        <img class="w-full h-48 object-cover" src="${properties.image || 'https://placehold.co/400x300'}" alt="${properties.title || 'Template Image'}">
+                        <div class="px-6 py-4">
+                            <div class="font-bold text-xl mb-2">${properties.title || 'Template Title'}</div>
+                            <p class="text-gray-700 text-base">
+                                ${properties.description || 'Template description goes here.'}
+                            </p>
                         </div>
-                    `;
-                } else {
-                    contentElement.innerHTML = `
-                        <div class="max-w-sm rounded overflow-hidden shadow-lg bg-white">
-                            <img class="w-full h-48 object-cover" src="${properties.image || 'https://placehold.co/400x300'}" alt="${properties.title || 'Template Image'}">
-                            <div class="px-6 py-4">
-                                <div class="font-bold text-xl mb-2">${properties.title || 'Template Title'}</div>
-                                <p class="text-gray-700 text-base">
-                                    ${properties.description || 'Template description goes here.'}
-                                </p>
-                            </div>
-                            <div class="px-6 pt-4 pb-2 flex justify-between items-center">
-                                <span class="text-xl font-bold text-primary">Rp ${formatRupiahValue(properties.price || 0)}</span>
-                                <button class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded">
-                                    ${properties.buttonText || 'Buy Now'}
-                                </button>
-                            </div>
+                        <div class="px-6 pt-4 pb-2 flex justify-between items-center">
+                            <span class="text-xl font-bold text-primary">Rp ${formatRupiahValue(properties.price || 0)}</span>
+                            <button class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded">
+                                ${properties.buttonText || 'Buy Now'}
+                            </button>
                         </div>
-                    `;
-                }
+                    </div>
+                `;
                 break;
         }
     }
@@ -2520,9 +2158,6 @@
         } else if (type === 'error') {
             wrapper.classList.add('bg-red-50', 'text-red-800');
             icon.innerHTML = '<path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 11.793a1 1 0 1 1-1.414 1.414L10 11.414l-2.293 2.293a1 1 0 0 1-1.414-1.414L8.586 10 6.293 7.707a1 1 0 0 1 1.414-1.414L10 8.586l2.293 2.293a1 1 0 0 1 1.414 1.414L11.414 10l2.293 2.293a1 1 0 0 1 1.414 1.414L11.414 10l2.293 2.293Z"/>';
-        } else if (type === 'info') {
-            wrapper.classList.add('bg-blue-50', 'text-blue-800');
-            icon.innerHTML = '<path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm0 4.5a1 1 0 1 1 0 2 1 1 0 0 1 0-2Zm1 4.5a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v5Z"/>';
         }
         
         toastMessage.textContent = message;
@@ -2539,177 +2174,6 @@
             toast.classList.remove('translate-x-0');
             toast.classList.add('translate-x-full');
         }
-    }
-    
-    // Fungsi untuk membuka modal template
-    function openTemplateModal() {
-        const modal = document.getElementById('template-modal');
-        if (modal) {
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            loadTemplateProducts();
-        }
-    }
-    
-    // Fungsi untuk menutup modal template
-    function closeTemplateModal() {
-        const modal = document.getElementById('template-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-    }
-    
-    function loadTemplateProducts() {
-        const container = document.getElementById('template-products-container');
-        if (!container) return;
-        
-        fetch(`/cms/builder/${domainId}/template-products`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.length === 0) {
-                    container.innerHTML = `
-                        <div class="col-span-full text-center py-8">
-                            <p class="text-gray-500">No template products found.</p>
-                            <a href="/cms/products" class="mt-2 inline-block text-primary hover:underline">Create your first template product</a>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                container.innerHTML = '';
-                data.forEach(product => {
-                    const productElement = createTemplateProductElement(product);
-                    container.appendChild(productElement);
-                });
-            })
-            .catch(error => {
-                console.error('Error loading template products:', error);
-                container.innerHTML = `
-                    <div class="col-span-full text-center py-8 text-red-500">
-                        <p>Error loading template products. Please try again.</p>
-                    </div>
-                `;
-            });
-    }
-    
-    function createTemplateProductElement(product) {
-        const element = document.createElement('div');
-        element.className = 'border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer';
-        element.onclick = () => addTemplateToBuilder(product);
-        
-        // Format harga
-        const price = product.properties.price ? parseInt(product.properties.price.toString().replace(/[^\d]/g, '')) : 0;
-        const formattedPrice = formatRupiahValue(price);
-        
-        element.innerHTML = `
-            <div class="relative">
-                <img src="${product.properties.image || 'https://placehold.co/400x300'}" 
-                     alt="${product.properties.title || 'Template Product'}" 
-                     class="w-full h-40 object-cover">
-                ${product.digital_product_path ? 
-                    `<span class="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded">Digital</span>` : 
-                    ''}
-            </div>
-            <div class="p-4">
-                <h3 class="font-semibold text-gray-900 truncate">${product.properties.title || 'Untitled Product'}</h3>
-                <p class="text-gray-600 text-sm mt-1 line-clamp-2">${product.properties.description || 'No description'}</p>
-                <div class="mt-3 flex justify-between items-center">
-                    <span class="text-lg font-bold text-primary">Rp ${formattedPrice}</span>
-                    <button class="px-3 py-1 bg-primary hover:bg-primary-dark text-white text-sm rounded">
-                        Add to Builder
-                    </button>
-                </div>
-            </div>
-        `;
-        
-        return element;
-    }
-    
-    function addTemplateToBuilder(product) {
-        // Jika ada fungsi kustom yang diatur (untuk template kosong), gunakan itu
-        if (window.addTemplateToBuilder && window.addTemplateToBuilder !== addTemplateToBuilder) {
-            window.addTemplateToBuilder(product);
-            return;
-        }
-        
-        // Untuk template biasa, tambahkan ke canvas
-        const emptyMessage = document.getElementById('empty-canvas-message');
-        if (emptyMessage) {
-            emptyMessage.remove();
-        }
-        
-        // Buat komponen di server
-        fetch(`/cms/builder/${domainId}/add-template`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify({
-                template_id: product.id
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                throw new Error(data.error);
-            }
-            
-            // Tambahkan ke canvas
-            const componentWrapper = document.createElement('div');
-            componentWrapper.className = 'component-wrapper relative group border border-transparent hover:border-dashed hover:border-gray-300 rounded p-2';
-            componentWrapper.dataset.id = data.id;
-            componentWrapper.dataset.type = data.type;
-            componentWrapper.dataset.properties = JSON.stringify(data.properties);
-            if (data.digital_product_path) {
-                componentWrapper.dataset.digitalProductPath = data.digital_product_path;
-            }
-            
-            // Format harga untuk ditampilkan
-            const price = data.properties.price ? parseInt(data.properties.price.toString().replace(/[^\d]/g, '')) : 0;
-            const formattedPrice = formatRupiahValue(price);
-            
-            componentWrapper.innerHTML = `
-                <div class="component-content">
-                    <div class="max-w-sm rounded overflow-hidden shadow-lg bg-white">
-                        <img class="w-full h-48 object-cover" src="${data.properties.image || 'https://placehold.co/400x300'}" alt="${data.properties.title || 'Template Image'}">
-                        <div class="px-6 py-4">
-                            <div class="font-bold text-xl mb-2">${data.properties.title || 'Template Title'}</div>
-                            <p class="text-gray-700 text-base">
-                                ${data.properties.description || 'Template description goes here.'}
-                            </p>
-                        </div>
-                        <div class="px-6 pt-4 pb-2 flex justify-between items-center">
-                            <span class="text-xl font-bold text-primary">Rp ${formattedPrice}</span>
-                            <a href="/checkout/${domainId}/${data.id}" class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded no-underline">
-                                ${data.properties.buttonText || 'Buy Now'}
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <div class="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 p-1 bg-white rounded shadow">
-                    <button onclick="editComponent(${data.id})" class="p-1 text-gray-500 hover:text-blue-500">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                        </svg>
-                    </button>
-                    <button onclick="deleteComponent(${data.id})" class="p-1 text-gray-500 hover:text-red-500">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
-                    </button>
-                </div>
-            `;
-            
-            document.getElementById('canvas').appendChild(componentWrapper);
-            closeTemplateModal();
-            showToast('Template product added to builder!', 'success');
-        })
-        .catch(error => {
-            console.error('Error adding template to builder:', error);
-            showToast('Error adding template product. Please try again.', 'error');
-        });
     }
     
     function publishPage() {
@@ -3128,152 +2592,6 @@
         xhr.send(formData);
     }
 
-    // Function to save empty template as a new product
-    function saveEmptyTemplateAsProduct() {
-        console.log('Saving empty template as product...');
-        
-        if (!currentComponentId) {
-            showToast('No component selected. Please try again.', 'error');
-            return;
-        }
-        
-        // Get form values
-        const title = document.getElementById('template-title').value.trim();
-        const description = document.getElementById('template-description').value.trim();
-        const price = document.getElementById('template-price').value;
-        const image = document.getElementById('template-image').value;
-        const buttonText = document.getElementById('template-button-text').value.trim();
-        
-        // Validate required fields
-        if (!title) {
-            showToast('Product name is required.', 'error');
-            return;
-        }
-        
-        if (!description) {
-            showToast('Product description is required.', 'error');
-            return;
-        }
-        
-        if (!price || price === '0') {
-            showToast('Product price is required.', 'error');
-            return;
-        }
-        
-        // Convert formatted price back to number
-        const numericPrice = parseInt(price.replace(/[^\d]/g, '')) || 0;
-        
-        // Get digital product info if exists
-        const componentElement = document.querySelector(`.component-wrapper[data-id="${currentComponentId}"]`);
-        const properties = JSON.parse(componentElement.dataset.properties || '{}');
-        const digitalProduct = properties.digitalProduct || null;
-        
-        // Prepare data
-        const productData = {
-            title: title,
-            description: description,
-            price: numericPrice,
-            image: image,
-            buttonText: buttonText || 'Buy Now',
-            digital_product_path: digitalProduct ? digitalProduct.path : null,
-            digital_product_original_name: digitalProduct ? digitalProduct.originalName : null,
-            digital_product_file_type: digitalProduct ? digitalProduct.fileType : null,
-            digital_product_file_size: digitalProduct ? digitalProduct.fileSize : null
-        };
-        
-        console.log('Product data:', productData);
-        
-        // Show loading state
-        const saveButton = document.querySelector('button[onclick="saveEmptyTemplateAsProduct()"]');
-        const originalText = saveButton.textContent;
-        saveButton.textContent = 'Creating Product...';
-        saveButton.disabled = true;
-        
-        // Send request to create product and update template
-        fetch(`/cms/builder/${domainId}/create-product-from-template`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                component_id: currentComponentId,
-                product_data: productData
-            })
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                // Update the component with the new product data
-                updateEmptyTemplateWithProduct(data.product, data.component);
-                
-                showToast('Product created successfully and template updated!', 'success');
-                closePropertiesPanel();
-            } else {
-                throw new Error(data.error || 'Failed to create product');
-            }
-        })
-        .catch(error => {
-            console.error('Error creating product:', error);
-            showToast('Error creating product: ' + error.message, 'error');
-        })
-        .finally(() => {
-            // Restore button state
-            saveButton.textContent = originalText;
-            saveButton.disabled = false;
-        });
-    }
-    
-    // Function to update empty template with product data
-    function updateEmptyTemplateWithProduct(product, component) {
-        const componentElement = document.querySelector(`.component-wrapper[data-id="${component.id}"]`);
-        if (!componentElement) return;
-        
-        // Update component properties
-        componentElement.dataset.properties = JSON.stringify(component.properties);
-        componentElement.dataset.type = component.type;
-        
-        // Update digital product path if exists
-        if (component.digital_product_path) {
-            componentElement.dataset.digitalProductPath = component.digital_product_path;
-        }
-        
-        // Update the component content
-        const contentElement = componentElement.querySelector('.component-content');
-        if (contentElement) {
-            const price = component.properties.price ? parseInt(component.properties.price.toString().replace(/[^\d]/g, '')) : 0;
-            const formattedPrice = formatRupiahValue(price);
-            
-            contentElement.innerHTML = `
-                <div class="max-w-sm rounded overflow-hidden shadow-lg bg-white">
-                    <img class="w-full h-48 object-cover" src="${component.properties.image || 'https://placehold.co/400x300'}" alt="${component.properties.title || 'Template Image'}">
-                    <div class="px-6 py-4">
-                        <div class="font-bold text-xl mb-2">${component.properties.title || 'Template Title'}</div>
-                        <p class="text-gray-700 text-base">
-                            ${component.properties.description || 'Template description goes here.'}
-                        </p>
-                    </div>
-                    <div class="px-6 pt-4 pb-2 flex justify-between items-center">
-                        <span class="text-xl font-bold text-primary">Rp ${formattedPrice}</span>
-                        <a href="/checkout/${domainId}/${component.id}" class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded no-underline">
-                            ${component.properties.buttonText || 'Buy Now'}
-                        </a>
-                    </div>
-                </div>
-            `;
-        }
-        
-        // Remove the empty template styling and make it look like a regular template
-        componentElement.classList.remove('empty-template-component');
-        componentElement.onclick = null; // Remove click handler
-    }
-
     // Handle digital product file selection
     function handleDigitalProductFileSelect(input) {
         const file = input.files[0];
@@ -3503,43 +2821,181 @@
                     if (heightInput) heightInput.value = container.style.height;
                 }
             }
-                });
+        });
     }
     
-    // Template Product Selection Modal
-    document.addEventListener('DOMContentLoaded', function() {
-        // Buat modal template jika belum ada
-        if (!document.getElementById('template-modal')) {
-            const modalHTML = `
-<!-- Template Product Selection Modal -->
-<div id="template-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-            <h3 class="text-lg font-semibold text-gray-900">Select Template Product</h3>
-            <button onclick="closeTemplateModal()" class="text-gray-400 hover:text-gray-500">
-                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-        </div>
-        <div class="p-6 overflow-y-auto flex-1">
-            <div id="template-products-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- Template products will be loaded here -->
-                <div class="text-center py-8 text-gray-500">
-                    <p>Loading template products...</p>
+    // Template Product Functions
+    function openTemplateModal() {
+        const modal = document.getElementById('template-modal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        // Load template products
+        loadTemplateProducts();
+    }
+    
+    function closeTemplateModal() {
+        const modal = document.getElementById('template-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+    
+    function loadTemplateProducts() {
+        const container = document.getElementById('template-products-container');
+        
+        fetch(`/cms/builder/${domainId}/template-products`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.length === 0) {
+                    container.innerHTML = `
+                        <div class="col-span-full text-center py-8">
+                            <p class="text-gray-500">No template products found.</p>
+                            <a href="/cms/products" class="mt-2 inline-block text-primary hover:underline">Create your first template product</a>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = '';
+                data.forEach(product => {
+                    const productElement = createTemplateProductElement(product);
+                    container.appendChild(productElement);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading template products:', error);
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-8 text-red-500">
+                        <p>Error loading template products. Please try again.</p>
+                    </div>
+                `;
+            });
+    }
+    
+    function createTemplateProductElement(product) {
+        const element = document.createElement('div');
+        element.className = 'border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer';
+        element.onclick = () => addTemplateToBuilder(product);
+        
+        // Format price
+        const price = product.properties.price ? parseInt(product.properties.price.toString().replace(/[^\d]/g, '')) : 0;
+        const formattedPrice = formatRupiahValue(price);
+        
+        element.innerHTML = `
+            <div class="relative">
+                <img src="${product.properties.image || 'https://placehold.co/400x300'}" 
+                     alt="${product.properties.title || 'Template Product'}" 
+                     class="w-full h-40 object-cover">
+                ${product.digital_product_path ? 
+                    `<span class="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded">Digital</span>` : 
+                    ''}
+            </div>
+            <div class="p-4">
+                <h3 class="font-semibold text-gray-900 truncate">${product.properties.title || 'Untitled Product'}</h3>
+                <p class="text-gray-600 text-sm mt-1 line-clamp-2">${product.properties.description || 'No description'}</p>
+                <div class="mt-3 flex justify-between items-center">
+                    <span class="text-lg font-bold text-primary">Rp ${formattedPrice}</span>
+                    <button class="px-3 py-1 bg-primary hover:bg-primary-dark text-white text-sm rounded">
+                        Add to Builder
+                    </button>
                 </div>
             </div>
-        </div>
-        <div class="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex justify-end">
-            <button onclick="closeTemplateModal()" class="px-4 py-2 text-gray-700 hover:text-gray-900">
-                Close
-            </button>
-        </div>
-    </div>
-</div>
-`;
-            // Tambahkan modal ke body
-            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        `;
+        
+        return element;
+    }
+    
+    function addTemplateToBuilder(product) {
+        // Remove empty canvas message if it exists
+        const emptyMessage = document.getElementById('empty-canvas-message');
+        if (emptyMessage) {
+            emptyMessage.remove();
+        }
+        
+        // Create component on server
+        fetch(`/cms/builder/${domainId}/add-template`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                template_id: product.id
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            // Add to canvas
+            const componentWrapper = document.createElement('div');
+            componentWrapper.className = 'component-wrapper relative group border border-transparent hover:border-dashed hover:border-gray-300 rounded p-2';
+            componentWrapper.dataset.id = data.id;
+            componentWrapper.dataset.type = data.type;
+            componentWrapper.dataset.properties = JSON.stringify(data.properties);
+            if (data.digital_product_path) {
+                componentWrapper.dataset.digitalProductPath = data.digital_product_path;
+            }
+            
+            // Format price for display
+            const price = data.properties.price ? parseInt(data.properties.price.toString().replace(/[^\d]/g, '')) : 0;
+            const formattedPrice = formatRupiahValue(price);
+            
+            componentWrapper.innerHTML = `
+                <div class="component-content">
+                    <div class="max-w-sm rounded overflow-hidden shadow-lg bg-white">
+                        <img class="w-full h-48 object-cover" src="${data.properties.image || 'https://placehold.co/400x300'}" alt="${data.properties.title || 'Template Image'}">
+                        <div class="px-6 py-4">
+                            <div class="font-bold text-xl mb-2">${data.properties.title || 'Template Title'}</div>
+                            <p class="text-gray-700 text-base">
+                                ${data.properties.description || 'Template description goes here.'}
+                            </p>
+                        </div>
+                        <div class="px-6 pt-4 pb-2 flex justify-between items-center">
+                            <span class="text-xl font-bold text-primary">Rp ${formattedPrice}</span>
+                            <a href="/checkout/${domainId}/${data.id}" class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded no-underline">
+                                ${data.properties.buttonText || 'Buy Now'}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 p-1 bg-white rounded shadow">
+                    <button onclick="editComponent(${data.id})" class="p-1 text-gray-500 hover:text-blue-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                    </button>
+                    <button onclick="deleteComponent(${data.id})" class="p-1 text-gray-500 hover:text-red-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('canvas').appendChild(componentWrapper);
+            closeTemplateModal();
+            showToast('Template product added to builder!', 'success');
+        })
+        .catch(error => {
+            console.error('Error adding template to builder:', error);
+            showToast('Error adding template product. Please try again.', 'error');
+        });
+    }
+    
+    // Update the template component item to open the modal
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('template-component-item').addEventListener('click', openTemplateModal);
+        
+        // Update the template component item click handler
+        const templateComponent = document.querySelector('.component-item[data-type="template"]');
+        if (templateComponent) {
+            templateComponent.addEventListener('click', function(e) {
+                e.preventDefault();
+                openTemplateModal();
+            });
         }
     });
 </script>

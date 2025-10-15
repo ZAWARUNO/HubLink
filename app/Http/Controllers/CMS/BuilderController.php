@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class BuilderController extends Controller
 {
@@ -24,7 +25,9 @@ class BuilderController extends Controller
     public function show($domainId)
     {
         $user = Auth::user();
-        $domain = $user->domains()->findOrFail($domainId);
+        $domain = Domain::where('id', $domainId)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
 
         // Get published components for preview
         $publishedComponents = $domain->components()
@@ -35,14 +38,21 @@ class BuilderController extends Controller
         // Get all components for builder
         $components = $domain->components()->orderBy('order')->get();
 
-        return view('cms.pages.builder', compact('domain', 'components', 'publishedComponents'));
+        // Get template products for this user
+        $templateProducts = Component::where('type', 'template')
+            ->whereIn('domain_id', $user->domains->pluck('id'))
+            ->get();
+
+        return view('cms.pages.builder', compact('domain', 'components', 'publishedComponents', 'templateProducts'));
     }
 
     public function storeComponent(Request $request, $domainId)
     {
         try {
             $user = Auth::user();
-            $domain = $user->domains()->findOrFail($domainId);
+            $domain = Domain::where('id', $domainId)
+                ->where('user_id', $user->id)
+                ->firstOrFail();
 
             $request->validate([
                 'type' => 'required|string',
@@ -50,9 +60,12 @@ class BuilderController extends Controller
                 'order' => 'required|integer'
             ]);
 
+            // Handle empty template components - allow them to be saved
+            $properties = $request->properties;
+
             $component = $domain->components()->create([
                 'type' => $request->type,
-                'properties' => $request->properties,
+                'properties' => $properties,
                 'order' => $request->order,
                 'is_published' => false
             ]);
@@ -67,7 +80,9 @@ class BuilderController extends Controller
     {
         try {
             $user = Auth::user();
-            $domain = $user->domains()->findOrFail($domainId);
+            $domain = Domain::where('id', $domainId)
+                ->where('user_id', $user->id)
+                ->firstOrFail();
             $component = $domain->components()->findOrFail($componentId);
 
             $request->validate([
@@ -76,9 +91,12 @@ class BuilderController extends Controller
                 'digital_product_path' => 'nullable|string'
             ]);
 
+            // Handle empty template components - allow them to be updated
+            $properties = $request->properties;
+
             // Prepare update data
             $updateData = [
-                'properties' => $request->properties,
+                'properties' => $properties,
                 'order' => $request->order
             ];
 
@@ -99,7 +117,9 @@ class BuilderController extends Controller
     {
         try {
             $user = Auth::user();
-            $domain = $user->domains()->findOrFail($domainId);
+            $domain = Domain::where('id', $domainId)
+                ->where('user_id', $user->id)
+                ->firstOrFail();
             $component = $domain->components()->findOrFail($componentId);
 
             $component->delete();
@@ -117,7 +137,9 @@ class BuilderController extends Controller
     {
         try {
             $user = Auth::user();
-            $domain = $user->domains()->findOrFail($domainId);
+            $domain = Domain::where('id', $domainId)
+                ->where('user_id', $user->id)
+                ->firstOrFail();
 
             $request->validate([
                 'components' => 'required|array'
@@ -140,7 +162,9 @@ class BuilderController extends Controller
     {
         try {
             $user = Auth::user();
-            $domain = $user->domains()->findOrFail($domainId);
+            $domain = Domain::where('id', $domainId)
+                ->where('user_id', $user->id)
+                ->firstOrFail();
 
             // Set all components to published
             $domain->components()->update(['is_published' => true]);
@@ -158,15 +182,17 @@ class BuilderController extends Controller
             $component->update(['order' => $index]);
         }
     }
-    
+
     public function uploadImage(Request $request, $domainId)
     {
         try {
             $user = Auth::user();
-            $domain = $user->domains()->findOrFail($domainId);
+            $domain = Domain::where('id', $domainId)
+                ->where('user_id', $user->id)
+                ->firstOrFail();
 
             // Validate the request
-            $validator = \Validator::make($request->all(), [
+            $validator = Validator::make($request->all(), [
                 'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             ]);
 
@@ -194,7 +220,7 @@ class BuilderController extends Controller
 
             // Return the URL of the uploaded image
             $imageUrl = Storage::url($imagePath);
-            
+
             return response()->json(['url' => $imageUrl]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['error' => 'Validation failed: ' . $e->getMessage()], 400);
@@ -207,10 +233,12 @@ class BuilderController extends Controller
     {
         try {
             $user = Auth::user();
-            $domain = $user->domains()->findOrFail($domainId);
+            $domain = Domain::where('id', $domainId)
+                ->where('user_id', $user->id)
+                ->firstOrFail();
 
             // Validate the request
-            $validator = \Validator::make($request->all(), [
+            $validator = Validator::make($request->all(), [
                 'file' => 'required|file|max:10240|mimes:pdf,zip,doc,docx,xls,xlsx,jpg,jpeg,png,gif', // 10MB max
             ]);
 
@@ -247,6 +275,138 @@ class BuilderController extends Controller
             return response()->json(['error' => 'Validation failed: ' . $e->getMessage()], 400);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to upload file: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // Method to get template products for a user
+    public function getTemplateProducts(Request $request)
+    {
+        try {
+            $user = Auth::user();
+
+            // Get all template components across all domains for this user
+            $templateProducts = Component::where('type', 'template')
+                ->whereIn('domain_id', $user->domains->pluck('id'))
+                ->get();
+
+            return response()->json($templateProducts);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to fetch template products: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // Method to add existing template product to builder
+    public function addTemplateProduct(Request $request, $domainId)
+    {
+        try {
+            $user = Auth::user();
+            $domain = Domain::where('id', $domainId)
+                ->where('user_id', $user->id)
+                ->firstOrFail();
+
+            $request->validate([
+                'template_id' => 'required|exists:components,id'
+            ]);
+
+            // Get the template component
+            $template = Component::where('type', 'template')
+                ->whereIn('domain_id', $user->domains->pluck('id'))
+                ->findOrFail($request->template_id);
+
+            // Create a new component in the current domain with the same properties
+            $newComponent = $domain->components()->create([
+                'type' => 'template',
+                'properties' => $template->properties,
+                'digital_product_path' => $template->digital_product_path,
+                'order' => $domain->components()->count(), // Place at the end
+                'is_published' => false
+            ]);
+
+            return response()->json($newComponent);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to add template product: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // Method to create product from empty template
+    public function createProductFromTemplate(Request $request, $domainId)
+    {
+        try {
+            $user = Auth::user();
+            $domain = Domain::where('id', $domainId)
+                ->where('user_id', $user->id)
+                ->firstOrFail();
+
+            $request->validate([
+                'component_id' => 'required|string',
+                'product_data' => 'required|array',
+                'product_data.title' => 'required|string|max:255',
+                'product_data.description' => 'required|string',
+                'product_data.price' => 'required|numeric|min:0',
+                'product_data.image' => 'nullable|string',
+                'product_data.buttonText' => 'nullable|string|max:255',
+                'product_data.digital_product_path' => 'nullable|string',
+                'product_data.digital_product_original_name' => 'nullable|string',
+                'product_data.digital_product_file_type' => 'nullable|string',
+                'product_data.digital_product_file_size' => 'nullable|numeric'
+            ]);
+
+            // Check if component exists and is an empty template
+            $component = $domain->components()->find($request->component_id);
+            if (!$component) {
+                return response()->json(['error' => 'Component not found'], 404);
+            }
+
+            $properties = $component->properties ?? [];
+            if (!isset($properties['isEmpty']) || $properties['isEmpty'] !== true) {
+                return response()->json(['error' => 'Component is not an empty template'], 400);
+            }
+
+            // Create a new product component with the provided data
+            $productData = $request->product_data;
+            $newProperties = [
+                'image' => $productData['image'] ?? 'https://placehold.co/400x300',
+                'title' => $productData['title'],
+                'description' => $productData['description'],
+                'price' => $productData['price'],
+                'buttonText' => $productData['buttonText'] ?? 'Buy Now',
+                'isEmpty' => false // Mark as no longer empty
+            ];
+
+            // Add digital product info if provided
+            if (!empty($productData['digital_product_path'])) {
+                $newProperties['digitalProduct'] = [
+                    'path' => $productData['digital_product_path'],
+                    'originalName' => $productData['digital_product_original_name'] ?? 'Uploaded Product',
+                    'fileType' => $productData['digital_product_file_type'] ?? 'unknown',
+                    'fileSize' => $productData['digital_product_file_size'] ?? 0
+                ];
+            }
+
+            // Update the component with the new product data
+            $component->update([
+                'properties' => $newProperties,
+                'digital_product_path' => $productData['digital_product_path'] ?? null
+            ]);
+
+            // Also create a template product for future use
+            $templateComponent = $domain->components()->create([
+                'type' => 'template',
+                'properties' => $newProperties,
+                'digital_product_path' => $productData['digital_product_path'] ?? null,
+                'order' => $domain->components()->count(),
+                'is_published' => false
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'product' => $templateComponent,
+                'component' => $component
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['error' => 'Validation failed: ' . $e->getMessage()], 400);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to create product: ' . $e->getMessage()], 500);
         }
     }
 }

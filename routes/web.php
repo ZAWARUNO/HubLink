@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CMS\HomeController as CmsHomeController;
 use App\Http\Controllers\CMS\DomainController as CmsDomainController;
 use App\Http\Controllers\CMS\BuilderController as CmsBuilderController;
+use App\Http\Controllers\CMS\ProductController as CmsProductController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\PaymentCallbackController;
 use App\Http\Controllers\DigitalProductController;
@@ -33,7 +34,7 @@ Route::middleware('auth')->prefix('cms')->name('cms.')->group(function () {
     // Domain edit routes
     Route::get('/domain/edit', [CmsDomainController::class, 'showEditForm'])->name('domain.edit');
     Route::put('/domain', [CmsDomainController::class, 'update'])->name('domain.update');
-    
+
     // Builder routes
     Route::get('/builder', [CmsBuilderController::class, 'index'])->name('builder.index');
     Route::get('/builder/{domainId}', [CmsBuilderController::class, 'show'])->name('builder.show');
@@ -46,6 +47,18 @@ Route::middleware('auth')->prefix('cms')->name('cms.')->group(function () {
     Route::post('/builder/{domainId}/upload-image', [CmsBuilderController::class, 'uploadImage'])->name('builder.image.upload');
     // Add digital product upload route
     Route::post('/builder/{domainId}/upload-digital-product', [CmsBuilderController::class, 'uploadDigitalProduct'])->name('builder.digital.upload');
+    // Add template product routes
+    Route::get('/builder/{domainId}/template-products', [CmsBuilderController::class, 'getTemplateProducts'])->name('builder.template.products');
+    Route::post('/builder/{domainId}/add-template', [CmsBuilderController::class, 'addTemplateProduct'])->name('builder.template.add');
+    Route::post('/builder/{domainId}/create-product-from-template', [CmsBuilderController::class, 'createProductFromTemplate'])->name('builder.template.create-product');
+
+    // Product routes
+    Route::get('/products', [CmsProductController::class, 'index'])->name('products.index');
+    Route::get('/products/create', [CmsProductController::class, 'create'])->name('products.create');
+    Route::post('/products', [CmsProductController::class, 'store'])->name('products.store');
+    Route::get('/products/{id}/edit', [CmsProductController::class, 'edit'])->name('products.edit');
+    Route::put('/products/{id}', [CmsProductController::class, 'update'])->name('products.update');
+    Route::delete('/products/{id}', [CmsProductController::class, 'destroy'])->name('products.destroy');
 });
 
 // Checkout routes

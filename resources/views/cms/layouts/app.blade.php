@@ -75,25 +75,25 @@
 				<span class="text-xl sm:text-2xl font-bold text-primary">HubLink</span>
 			</div>
 			<nav class="flex-1 p-3 sm:p-4 space-y-1">
-				<a href="{{ route('cms.home') }}" class="flex items-center gap-2 sm:gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 text-sm sm:text-base">
+				<a href="{{ route('cms.home') }}" class="flex items-center gap-2 sm:gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 text-sm sm:text-base {{ request()->routeIs('cms.home') ? 'bg-gray-100' : '' }}">
 					<svg class="w-4 h-4 sm:w-5 sm:h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9 9 9M4 10v10h6V14h4v6h6V10"/></svg>
 					<span>Home</span>
 				</a>
-				<a href="{{ route('cms.builder.index') }}" class="flex items-center gap-2 sm:gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 text-sm sm:text-base">
+				<a href="{{ route('cms.builder.index') }}" class="flex items-center gap-2 sm:gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 text-sm sm:text-base {{ request()->routeIs('cms.builder.*') ? 'bg-gray-100' : '' }}">
 					<svg class="w-4 h-4 sm:w-5 sm:h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
 					<span>Builder</span>
 				</a>
-				<a href="{{ route('profile.edit') }}" class="flex items-center gap-2 sm:gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 text-sm sm:text-base">
+				<a href="{{ route('cms.products.index') }}" class="flex items-center gap-2 sm:gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 text-sm sm:text-base {{ request()->routeIs('cms.products.*') ? 'bg-gray-100' : '' }}">
+					<svg class="w-4 h-4 sm:w-5 sm:h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V7a2 2 0 00-2-2h-3l-2-2H9L7 5H5a2 2 0 00-2 2v6m17 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6"/></svg>
+					<span>Produk</span>
+				</a>
+				<a href="{{ route('profile.edit') }}" class="flex items-center gap-2 sm:gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 text-sm sm:text-base {{ request()->routeIs('profile.edit') ? 'bg-gray-100' : '' }}">
 					<svg class="w-4 h-4 sm:w-5 sm:h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
 					<span>Profile</span>
 				</a>
 				<a href="#" class="flex items-center gap-2 sm:gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 text-sm sm:text-base">
 					<svg class="w-4 h-4 sm:w-5 sm:h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/></svg>
 					<span>Hub</span>
-				</a>
-				<a href="#" class="flex items-center gap-2 sm:gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 text-sm sm:text-base">
-					<svg class="w-4 h-4 sm:w-5 sm:h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V7a2 2 0 00-2-2h-3l-2-2H9L7 5H5a2 2 0 00-2 2v6m17 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6"/></svg>
-					<span>Produk</span>
 				</a>
 				<a href="#" class="flex items-center gap-2 sm:gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 text-sm sm:text-base">
 					<svg class="w-4 h-4 sm:w-5 sm:h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17v-4a4 4 0 00-4-4H5M13 7h6a2 2 0 012 2v10a2 2 0 01-2 2h-6a4 4 0 00-4-4v-4"/></svg>
@@ -121,25 +121,25 @@
 		<aside class="w-64 bg-white border-r border-gray-200 hidden md:flex md:flex-col fixed inset-y-0">
 			<div class="h-16 flex items-center px-6 border-b"><span class="text-2xl font-bold text-primary">HubLink</span></div>
 			<nav class="flex-1 p-4 space-y-1">
-				<a href="{{ route('cms.home') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700">
+				<a href="{{ route('cms.home') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 {{ request()->routeIs('cms.home') ? 'bg-gray-100' : '' }}">
 					<svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9 9 9M4 10v10h6V14h4v6h6V10"/></svg>
 					<span>Home</span>
 				</a>
-				<a href="{{ route('cms.builder.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700">
+				<a href="{{ route('cms.builder.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 {{ request()->routeIs('cms.builder.*') ? 'bg-gray-100' : '' }}">
 					<svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
 					<span>Builder</span>
 				</a>
-				<a href="{{ route('profile.edit') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700">
+				<a href="{{ route('cms.products.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 {{ request()->routeIs('cms.products.*') ? 'bg-gray-100' : '' }}">
+					<svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V7a2 2 0 00-2-2h-3l-2-2H9L7 5H5a2 2 0 00-2 2v6m17 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6"/></svg>
+					<span>Produk</span>
+				</a>
+				<a href="{{ route('profile.edit') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 {{ request()->routeIs('profile.edit') ? 'bg-gray-100' : '' }}">
 					<svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
 					<span>Profile</span>
 				</a>
 				<a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700">
 					<svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/></svg>
 					<span>Hub</span>
-				</a>
-				<a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700">
-					<svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V7a2 2 0 00-2-2h-3l-2-2H9L7 5H5a2 2 0 00-2 2v6m17 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6"/></svg>
-					<span>Produk</span>
 				</a>
 				<a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700">
 					<svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17v-4a4 4 0 00-4-4H5M13 7h6a2 2 0 012 2v10a2 2 0 01-2 2h-6a4 4 0 00-4-4v-4"/></svg>
@@ -206,13 +206,13 @@
 					<svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
 					<span>Builder</span>
 				</a>
+				<a href="{{ route('cms.products.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700">
+					<svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V7a2 2 0 00-2-2h-3l-2-2H9L7 5H5a2 2 0 00-2 2v6m17 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6"/></svg>
+					<span>Produk</span>
+				</a>
 				<a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700">
 					<svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/></svg>
 					<span>Hub</span>
-				</a>
-				<a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700">
-					<svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V7a2 2 0 00-2-2h-3l-2-2H9L7 5H5a2 2 0 00-2 2v6m17 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6"/></svg>
-					<span>Produk</span>
 				</a>
 				<a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700">
 					<svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h10M9 21h6"/></svg>
