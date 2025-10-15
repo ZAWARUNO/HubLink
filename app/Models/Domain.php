@@ -31,4 +31,9 @@ class Domain extends Model
     {
         return $this->hasMany(Component::class);
     }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
 }

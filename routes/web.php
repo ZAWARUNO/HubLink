@@ -6,6 +6,7 @@ use App\Http\Controllers\CMS\HomeController as CmsHomeController;
 use App\Http\Controllers\CMS\DomainController as CmsDomainController;
 use App\Http\Controllers\CMS\BuilderController as CmsBuilderController;
 use App\Http\Controllers\CMS\ProductController as CmsProductController;
+use App\Http\Controllers\CMS\StatisticsController as CmsStatisticsController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\PaymentCallbackController;
 use App\Http\Controllers\DigitalProductController;
@@ -59,6 +60,9 @@ Route::middleware('auth')->prefix('cms')->name('cms.')->group(function () {
     Route::get('/products/{id}/edit', [CmsProductController::class, 'edit'])->name('products.edit');
     Route::put('/products/{id}', [CmsProductController::class, 'update'])->name('products.update');
     Route::delete('/products/{id}', [CmsProductController::class, 'destroy'])->name('products.destroy');
+
+    // Statistics routes
+    Route::get('/statistics', [CmsStatisticsController::class, 'index'])->name('statistics.index');
 });
 
 // Checkout routes
