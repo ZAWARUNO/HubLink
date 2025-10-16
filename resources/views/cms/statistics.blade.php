@@ -9,17 +9,17 @@
             <p class="text-gray-600 mt-1">Pantau performa dan analisis bisnis Anda</p>
         </div>
         <div class="flex gap-2">
-            <button class="px-4 py-2 bg-white border rounded-lg hover:bg-gray-50 text-sm">
-                <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <a href="{{ route('cms.statistics.export') }}" class="px-4 py-2 bg-white border rounded-lg hover:bg-gray-50 text-sm inline-flex items-center" target="_blank">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
                 Export
-            </button>
-            <button class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark text-sm">
-                <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            </a>
+            <button onclick="refreshStatistics()" id="refreshBtn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark text-sm inline-flex items-center">
+                <svg id="refreshIcon" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                 </svg>
-                Refresh
+                <span id="refreshText">Refresh</span>
             </button>
         </div>
     </div>
@@ -320,6 +320,35 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Refresh Statistics Function
+function refreshStatistics() {
+    const refreshBtn = document.getElementById('refreshBtn');
+    const refreshIcon = document.getElementById('refreshIcon');
+    const refreshText = document.getElementById('refreshText');
+    
+    // Disable button
+    refreshBtn.disabled = true;
+    refreshText.textContent = 'Refreshing...';
+    
+    // Add spinning animation
+    refreshIcon.style.animation = 'spin 1s linear infinite';
+    
+    // Reload page after animation
+    setTimeout(() => {
+        window.location.reload();
+    }, 500);
+}
+
+// Add CSS for spin animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+`;
+document.head.appendChild(style);
 </script>
 @endpush
 @endsection

@@ -163,4 +163,49 @@ class StatisticsController extends Controller
             'revenueGrowth'
         ));
     }
+
+    /**
+     * Export statistics to PDF
+     */
+    public function export()
+    {
+        $user = Auth::user();
+        $domains = $user->domains()->with(['components', 'orders', 'visitors'])->get();
+
+        // Ambil semua data statistik
+        $totalVisitors = $domains->sum(function ($domain) {
+            return $domain->visitors()->distinct('session_id')->count('session_id');
+        });
+
+        $totalPurchases = $domains->sum(function ($domain) {
+            return $domain->orders()->where('transaction_status', 'settlement')->count();
+        });
+
+        $totalRevenue = $domains->sum(function ($domain) {
+            return $domain->orders()->where('transaction_status', 'settlement')->sum('amount');
+        });
+
+        $totalProducts = $domains->sum(function ($domain) {
+            return $domain->components()->where('type', 'template')->count();
+        });
+
+        // Data untuk export
+        $data = [
+            'user' => $user,
+            'totalVisitors' => $totalVisitors,
+            'totalPurchases' => $totalPurchases,
+            'totalRevenue' => $totalRevenue,
+            'totalProducts' => $totalProducts,
+            'domains' => $domains,
+            'exportDate' => Carbon::now()->format('d M Y H:i'),
+        ];
+
+        // Generate HTML untuk export
+        $html = view('cms.statistics-export', $data)->render();
+
+        // Return sebagai download HTML (bisa diubah ke PDF dengan library seperti DomPDF)
+        return response($html)
+            ->header('Content-Type', 'text/html')
+            ->header('Content-Disposition', 'attachment; filename="statistik-' . date('Y-m-d') . '.html"');
+    }
 }

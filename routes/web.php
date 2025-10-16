@@ -7,6 +7,7 @@ use App\Http\Controllers\CMS\DomainController as CmsDomainController;
 use App\Http\Controllers\CMS\BuilderController as CmsBuilderController;
 use App\Http\Controllers\CMS\ProductController as CmsProductController;
 use App\Http\Controllers\CMS\StatisticsController as CmsStatisticsController;
+use App\Http\Controllers\CMS\OrderController as CmsOrderController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\PaymentCallbackController;
 use App\Http\Controllers\DigitalProductController;
@@ -63,6 +64,12 @@ Route::middleware('auth')->prefix('cms')->name('cms.')->group(function () {
 
     // Statistics routes
     Route::get('/statistics', [CmsStatisticsController::class, 'index'])->name('statistics.index');
+    Route::get('/statistics/export', [CmsStatisticsController::class, 'export'])->name('statistics.export');
+
+    // Order routes
+    Route::get('/orders', [CmsOrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{id}', [CmsOrderController::class, 'show'])->name('orders.show');
+    Route::delete('/orders/{id}', [CmsOrderController::class, 'destroy'])->name('orders.destroy');
 });
 
 // Checkout routes
