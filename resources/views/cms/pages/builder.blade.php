@@ -120,17 +120,155 @@
         transform: translateY(-50%);
         cursor: e-resize;
     }
+    
+    /* Mobile Preview Mode */
+    .canvas-container {
+        transition: all 0.3s ease;
+    }
+    
+    .canvas-container.mobile-view {
+        max-width: 375px;
+        margin: 0 auto;
+        box-shadow: 0 0 0 8px #1f2937, 0 0 0 10px #374151;
+        border-radius: 24px;
+        overflow: hidden;
+    }
+    
+    .canvas-container.mobile-view .bg-white {
+        border-radius: 0 !important;
+    }
+    
+    /* Mobile device frame */
+    .mobile-frame {
+        position: relative;
+    }
+    
+    .mobile-frame::before {
+        content: '';
+        position: absolute;
+        top: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 6px;
+        background: #374151;
+        border-radius: 3px;
+        z-index: 10;
+    }
+    
+    /* Mobile Responsive Builder */
+    @media (max-width: 768px) {
+        /* Hide components panel by default on mobile */
+        .components-panel {
+            position: fixed;
+            left: -100%;
+            top: 0;
+            bottom: 0;
+            z-index: 50;
+            transition: left 0.3s ease;
+            width: 80%;
+            max-width: 280px;
+        }
+        
+        .components-panel.open {
+            left: 0;
+        }
+        
+        /* Hide properties panel by default on mobile */
+        #properties-panel {
+            position: fixed;
+            right: -100%;
+            top: 0;
+            bottom: 0;
+            z-index: 50;
+            transition: right 0.3s ease;
+            width: 90%;
+            max-width: 320px;
+        }
+        
+        #properties-panel:not(.hidden) {
+            right: 0;
+        }
+        
+        /* Full width canvas on mobile */
+        .canvas-area {
+            width: 100% !important;
+        }
+        
+        /* Adjust header buttons for mobile */
+        .builder-header {
+            padding: 0.75rem;
+        }
+        
+        .builder-header button span {
+            display: none;
+        }
+        
+        .builder-header button {
+            padding: 0.5rem;
+        }
+        
+        /* Mobile canvas container */
+        .canvas-container {
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 1rem !important;
+        }
+        
+        .canvas-container.mobile-view {
+            max-width: 100% !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+        }
+    }
+    
+    /* Overlay for mobile panels */
+    .panel-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 40;
+    }
+    
+    .panel-overlay.active {
+        display: block;
+    }
 </style>
 
 <div id="builder-app" class="flex flex-col h-full">
     <!-- Builder Header -->
-    <div class="bg-white border-b p-4 flex justify-between items-center">
-        <div>
-            <h1 class="text-xl font-bold text-gray-900">Page Builder</h1>
-            <p class="text-gray-600">{{ $domain->title ?? 'hub.link/'.$domain->slug }}</p>
+    <div class="bg-white border-b p-4 flex justify-between items-center builder-header">
+        <div class="flex items-center gap-3">
+            <!-- Mobile Components Toggle -->
+            <button onclick="toggleComponentsPanel()" class="md:hidden p-2 hover:bg-gray-100 rounded-lg">
+                <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+            <div>
+                <h1 class="text-xl font-bold text-gray-900">Page Builder</h1>
+                <p class="text-gray-600 hidden sm:block">{{ $domain->title ?? 'hub.link/'.$domain->slug }}</p>
+            </div>
         </div>
-        <div class="flex gap-2">
-            <button onclick="previewPage()" class="px-4 py-2 border rounded-lg flex items-center gap-2">
+        <div class="flex gap-2 items-center">
+            <!-- Device Preview Toggle -->
+            <div class="flex border rounded-lg overflow-hidden">
+                <button id="desktop-view-btn" onclick="toggleDeviceView('desktop')" class="px-3 py-2 bg-primary text-white flex items-center gap-2 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                    <span class="text-sm">Desktop</span>
+                </button>
+                <button id="mobile-view-btn" onclick="toggleDeviceView('mobile')" class="px-3 py-2 bg-white hover:bg-gray-50 flex items-center gap-2 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                    </svg>
+                    <span class="text-sm">Mobile</span>
+                </button>
+            </div>
+            
+            <button onclick="previewPage()" class="px-4 py-2 border rounded-lg flex items-center gap-2 hover:bg-gray-50">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
@@ -148,9 +286,14 @@
 
     <div class="flex flex-1 overflow-hidden">
         <!-- Components Panel -->
-        <div class="w-64 bg-white border-r flex flex-col">
-            <div class="p-4 border-b">
+        <div class="w-64 bg-white border-r flex flex-col components-panel" id="components-panel">
+            <div class="p-4 border-b flex justify-between items-center">
                 <h2 class="font-semibold text-gray-900">Components</h2>
+                <button onclick="toggleComponentsPanel()" class="md:hidden p-1 hover:bg-gray-100 rounded">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
             </div>
             <div class="flex-1 overflow-y-auto p-4 space-y-2">
                 <div draggable="true" data-type="text" class="component-item p-3 border rounded-lg cursor-move hover:bg-gray-50 flex items-center gap-2 transition-colors duration-200">
@@ -183,6 +326,12 @@
                     </svg>
                     <span>Divider</span>
                 </div>
+                <div draggable="true" data-type="profile" class="component-item p-3 border rounded-lg cursor-move hover:bg-gray-50 flex items-center gap-2 transition-colors duration-200">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    <span>Profile</span>
+                </div>
                 <div draggable="true" data-type="template" class="component-item p-3 border rounded-lg cursor-move hover:bg-gray-50 flex items-center gap-2 transition-colors duration-200">
                     <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
@@ -193,9 +342,9 @@
         </div>
 
         <!-- Canvas Area -->
-        <div class="flex-1 flex flex-col">
-            <div class="flex-1 overflow-auto p-8 bg-gray-50">
-                <div class="max-w-2xl mx-auto bg-white min-h-full shadow-sm border rounded-lg p-6">
+        <div class="flex-1 flex flex-col canvas-area">
+            <div class="flex-1 overflow-auto p-4 md:p-8 bg-gray-50">
+                <div id="canvas-container" class="canvas-container max-w-2xl mx-auto bg-white min-h-full shadow-sm border rounded-lg p-6">
                     <div id="canvas" class="space-y-4">
                         <!-- Components will be added here -->
                         @if($components->count() == 0)
@@ -320,6 +469,70 @@
                                         @case('divider')
                                             <hr class="border-gray-300">
                                             @break
+                                        @case('profile')
+                                            @php
+                                                $showPhoto = $component->properties['showPhoto'] ?? true;
+                                                $showName = $component->properties['showName'] ?? true;
+                                                $showUsername = $component->properties['showUsername'] ?? true;
+                                                $alignment = $component->properties['alignment'] ?? 'left';
+                                                $layout = $component->properties['layout'] ?? 'horizontal';
+                                                $photoSize = $component->properties['photoSize'] ?? 'medium';
+                                                
+                                                // Photo size mapping
+                                                $sizeMap = [
+                                                    'small' => 'w-12 h-12',
+                                                    'medium' => 'w-16 h-16',
+                                                    'large' => 'w-24 h-24',
+                                                    'xlarge' => 'w-32 h-32'
+                                                ];
+                                                $photoSizeClass = $sizeMap[$photoSize] ?? 'w-16 h-16';
+                                                
+                                                // Alignment classes
+                                                $alignmentClass = '';
+                                                if ($alignment === 'center') {
+                                                    $alignmentClass = 'justify-center text-center';
+                                                } elseif ($alignment === 'right') {
+                                                    $alignmentClass = 'justify-end text-right';
+                                                } else {
+                                                    $alignmentClass = 'justify-start text-left';
+                                                }
+                                                
+                                                // Layout classes
+                                                $layoutClass = 'flex items-center gap-4 p-4';
+                                                if ($layout === 'vertical') {
+                                                    $layoutClass = 'flex flex-col items-center gap-4 p-4 text-center';
+                                                } elseif ($layout === 'compact') {
+                                                    $layoutClass = 'flex items-center gap-2 p-2';
+                                                } elseif ($layout === 'card') {
+                                                    $layoutClass = 'flex flex-col items-center gap-4 p-6 bg-gray-50 rounded-lg border';
+                                                }
+                                            @endphp
+                                            <div class="{{ $layoutClass }} {{ $alignmentClass }}">
+                                                @if($showPhoto)
+                                                    @if($domain->user->profile_photo)
+                                                        <img src="{{ asset('storage/' . $domain->user->profile_photo) }}" 
+                                                             alt="{{ $domain->user->name }}" 
+                                                             class="{{ $photoSizeClass }} rounded-full object-cover">
+                                                    @else
+                                                        <div class="{{ $photoSizeClass }} rounded-full bg-primary/10 flex items-center justify-center">
+                                                            <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                                            </svg>
+                                                        </div>
+                                                    @endif
+                                                @endif
+                                                @if($showName || $showUsername)
+                                                    <div>
+                                                        @if($showName)
+                                                            <h3 class="font-semibold text-lg text-gray-900">{{ $domain->user->name }}</h3>
+                                                        @endif
+                                                        @if($showUsername)
+                                                            <p class="text-gray-600 text-sm">{{ '@' . $domain->slug }}</p>
+                                                        @endif
+                                                    </div>
+                                                @endif
+                                            </div>
+                                            @break
                                         @case('template')
                                             @php
                                                 $isEmpty = isset($component->properties['isEmpty']) && $component->properties['isEmpty'] === true;
@@ -404,6 +617,9 @@
             </div>
         </div>
     </div>
+    
+    <!-- Overlay for Mobile Panels -->
+    <div id="panel-overlay" class="panel-overlay" onclick="closeMobilePanels()"></div>
 </div>
 
 <!-- Preview Modal -->
@@ -461,6 +677,11 @@
         }
     });
     const domainId = {{ $domain->id }};
+    const domainUser = {
+        name: '{{ $domain->user->name }}',
+        profilePhoto: '{{ $domain->user->profile_photo ? asset("storage/" . $domain->user->profile_photo) : "" }}',
+        slug: '{{ $domain->slug }}'
+    };
     let currentComponentId = null;
     let currentComponentType = null;
     
@@ -795,6 +1016,24 @@
                 break;
             case 'divider':
                 componentHtml = `<hr class="border-gray-300">`;
+                break;
+            case 'profile':
+                componentHtml = `
+                    <div class="flex items-center gap-4 p-4">
+                        ${domainUser.profilePhoto ? 
+                            `<img src="${domainUser.profilePhoto}" alt="${domainUser.name}" class="w-16 h-16 rounded-full object-cover">` :
+                            `<div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                                <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                            </div>`
+                        }
+                        <div>
+                            <h3 class="font-semibold text-lg text-gray-900">${domainUser.name}</h3>
+                            <p class="text-gray-600 text-sm">@${domainUser.slug}</p>
+                        </div>
+                    </div>
+                `;
                 break;
             case 'template':
                 if (isEmptyTemplate) {
@@ -1148,6 +1387,15 @@
                     style: 'solid',
                     color: '#e5e7eb',
                     thickness: '1px'
+                };
+            case 'profile':
+                return {
+                    showPhoto: true,
+                    showName: true,
+                    showUsername: true,
+                    alignment: 'left',
+                    layout: 'horizontal',
+                    photoSize: 'medium'
                 };
             case 'template':
                 return {
@@ -1516,6 +1764,67 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Thickness</label>
                             <input type="text" id="divider-thickness" value="${properties.thickness || '1px'}" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                        </div>
+                        <button onclick="saveComponentProperties()" class="w-full bg-primary hover:bg-primary-dark text-white py-2 rounded-lg">
+                            Save Changes
+                        </button>
+                    </div>
+                `;
+                break;
+            case 'profile':
+                html = `
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Layout Style</label>
+                            <select id="profile-layout" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option value="horizontal" ${properties.layout === 'horizontal' || !properties.layout ? 'selected' : ''}>Horizontal (Photo + Text Side by Side)</option>
+                                <option value="vertical" ${properties.layout === 'vertical' ? 'selected' : ''}>Vertical (Photo on Top)</option>
+                                <option value="compact" ${properties.layout === 'compact' ? 'selected' : ''}>Compact (Small Photo + Text)</option>
+                                <option value="card" ${properties.layout === 'card' ? 'selected' : ''}>Card (With Background)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Display Options</label>
+                            <div class="space-y-2">
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" id="profile-show-photo" class="rounded border-gray-300 text-primary focus:ring-primary" ${properties.showPhoto !== false ? 'checked' : ''}>
+                                    <span class="ml-2">Show Photo</span>
+                                </label>
+                            </div>
+                            <div class="space-y-2 mt-2">
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" id="profile-show-name" class="rounded border-gray-300 text-primary focus:ring-primary" ${properties.showName !== false ? 'checked' : ''}>
+                                    <span class="ml-2">Show Name</span>
+                                </label>
+                            </div>
+                            <div class="space-y-2 mt-2">
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" id="profile-show-username" class="rounded border-gray-300 text-primary focus:ring-primary" ${properties.showUsername !== false ? 'checked' : ''}>
+                                    <span class="ml-2">Show Username</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Alignment</label>
+                            <select id="profile-alignment" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option value="left" ${properties.alignment === 'left' ? 'selected' : ''}>Left</option>
+                                <option value="center" ${properties.alignment === 'center' ? 'selected' : ''}>Center</option>
+                                <option value="right" ${properties.alignment === 'right' ? 'selected' : ''}>Right</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Photo Size</label>
+                            <select id="profile-photo-size" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option value="small" ${properties.photoSize === 'small' ? 'selected' : ''}>Small (48px)</option>
+                                <option value="medium" ${properties.photoSize === 'medium' || !properties.photoSize ? 'selected' : ''}>Medium (64px)</option>
+                                <option value="large" ${properties.photoSize === 'large' ? 'selected' : ''}>Large (96px)</option>
+                                <option value="xlarge" ${properties.photoSize === 'xlarge' ? 'selected' : ''}>Extra Large (128px)</option>
+                            </select>
+                        </div>
+                        <div class="p-3 bg-blue-50 rounded-lg">
+                            <p class="text-sm text-blue-800">
+                                <strong>Note:</strong> Profile akan menampilkan foto dan nama dari user pemilik domain.
+                            </p>
                         </div>
                         <button onclick="saveComponentProperties()" class="w-full bg-primary hover:bg-primary-dark text-white py-2 rounded-lg">
                             Save Changes
@@ -1900,6 +2209,32 @@
         } catch(error) {
             console.error('Error getting divider component properties:', error);
             showToast('Error getting divider component properties. Please try again.', 'error');
+        }
+        
+        // Profile component properties
+        let profileShowPhoto, profileShowName, profileShowUsername, profileAlignment, profileLayout, profilePhotoSize;
+        try {
+            profileShowPhoto = document.getElementById('profile-show-photo');
+            profileShowName = document.getElementById('profile-show-name');
+            profileShowUsername = document.getElementById('profile-show-username');
+            profileAlignment = document.getElementById('profile-alignment');
+            profileLayout = document.getElementById('profile-layout');
+            profilePhotoSize = document.getElementById('profile-photo-size');
+        } catch(error) {
+            console.error('Error getting profile component elements:', error);
+            showToast('Error getting profile component elements. Please try again.', 'error');
+        }
+        
+        try {
+            if (profileShowPhoto) properties.showPhoto = profileShowPhoto.checked;
+            if (profileShowName) properties.showName = profileShowName.checked;
+            if (profileShowUsername) properties.showUsername = profileShowUsername.checked;
+            if (profileAlignment) properties.alignment = profileAlignment.value;
+            if (profileLayout) properties.layout = profileLayout.value;
+            if (profilePhotoSize) properties.photoSize = profilePhotoSize.value;
+        } catch(error) {
+            console.error('Error getting profile component properties:', error);
+            showToast('Error getting profile component properties. Please try again.', 'error');
         }
         
         // Template component properties
@@ -2353,6 +2688,74 @@
                     const style = component.properties.style || 'solid';
                     contentElement.innerHTML = `<hr style="border: ${thickness} ${style} ${color};">`;
                     break;
+                case 'profile':
+                    // Build profile layout based on properties
+                    const layout = component.properties.layout || 'horizontal';
+                    const photoSize = component.properties.photoSize || 'medium';
+                    const alignment = component.properties.alignment || 'left';
+                    const showPhoto = component.properties.showPhoto !== false;
+                    const showName = component.properties.showName !== false;
+                    const showUsername = component.properties.showUsername !== false;
+                    
+                    // Photo size mapping
+                    const sizeMap = {
+                        'small': 'w-12 h-12',
+                        'medium': 'w-16 h-16',
+                        'large': 'w-24 h-24',
+                        'xlarge': 'w-32 h-32'
+                    };
+                    const photoSizeClass = sizeMap[photoSize] || 'w-16 h-16';
+                    
+                    // Alignment classes
+                    let alignmentClasses = '';
+                    if (alignment === 'center') {
+                        alignmentClasses = 'justify-center text-center';
+                    } else if (alignment === 'right') {
+                        alignmentClasses = 'justify-end text-right';
+                    } else {
+                        alignmentClasses = 'justify-start text-left';
+                    }
+                    
+                    // Layout classes
+                    let layoutClasses = 'flex items-center gap-4 p-4';
+                    if (layout === 'vertical') {
+                        layoutClasses = 'flex flex-col items-center gap-4 p-4 text-center';
+                    } else if (layout === 'compact') {
+                        layoutClasses = 'flex items-center gap-2 p-2';
+                    } else if (layout === 'card') {
+                        layoutClasses = 'flex flex-col items-center gap-4 p-6 bg-gray-50 rounded-lg border';
+                    }
+                    
+                    let profileHtml = `<div class="${layoutClasses} ${alignmentClasses}">`;
+                    
+                    if (showPhoto) {
+                        if (domainUser.profilePhoto) {
+                            profileHtml += `<img src="${domainUser.profilePhoto}" alt="${domainUser.name}" class="${photoSizeClass} rounded-full object-cover">`;
+                        } else {
+                            profileHtml += `
+                                <div class="${photoSizeClass} rounded-full bg-primary/10 flex items-center justify-center">
+                                    <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                    </svg>
+                                </div>
+                            `;
+                        }
+                    }
+                    
+                    if (showName || showUsername) {
+                        profileHtml += '<div>';
+                        if (showName) {
+                            profileHtml += `<h3 class="font-semibold text-lg text-gray-900">${domainUser.name}</h3>`;
+                        }
+                        if (showUsername) {
+                            profileHtml += `<p class="text-gray-600 text-sm">@${domainUser.slug}</p>`;
+                        }
+                        profileHtml += '</div>';
+                    }
+                    
+                    profileHtml += '</div>';
+                    contentElement.innerHTML = profileHtml;
+                    break;
                 case 'template':
                     try {
                         const price = component.properties.price ? parseInt(component.properties.price.toString().replace(/[^\d]/g, '')) : 0;
@@ -2710,6 +3113,77 @@
             console.error('Error adding template to builder:', error);
             showToast('Error adding template product. Please try again.', 'error');
         });
+    }
+    
+    // Toggle Components Panel (Mobile)
+    function toggleComponentsPanel() {
+        const panel = document.getElementById('components-panel');
+        const overlay = document.getElementById('panel-overlay');
+        
+        if (panel && overlay) {
+            panel.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+    }
+    
+    // Close Mobile Panels
+    function closeMobilePanels() {
+        const componentsPanel = document.getElementById('components-panel');
+        const propertiesPanel = document.getElementById('properties-panel');
+        const overlay = document.getElementById('panel-overlay');
+        
+        if (componentsPanel) componentsPanel.classList.remove('open');
+        if (propertiesPanel) propertiesPanel.classList.remove('open');
+        if (overlay) overlay.classList.remove('active');
+    }
+    
+    // Override closePropertiesPanel to handle mobile
+    const originalClosePropertiesPanel = closePropertiesPanel;
+    closePropertiesPanel = function() {
+        const panel = document.getElementById('properties-panel');
+        const overlay = document.getElementById('panel-overlay');
+        
+        if (panel) panel.classList.add('hidden');
+        if (overlay) overlay.classList.remove('active');
+    };
+    
+    // Override editComponent to show overlay on mobile
+    const originalEditComponent = editComponent;
+    editComponent = function(componentId) {
+        originalEditComponent(componentId);
+        
+        // Show overlay on mobile when properties panel opens
+        const overlay = document.getElementById('panel-overlay');
+        if (overlay && window.innerWidth < 768) {
+            overlay.classList.add('active');
+        }
+    };
+    
+    // Toggle Device View (Desktop/Mobile)
+    function toggleDeviceView(device) {
+        const canvasContainer = document.getElementById('canvas-container');
+        const desktopBtn = document.getElementById('desktop-view-btn');
+        const mobileBtn = document.getElementById('mobile-view-btn');
+        
+        if (device === 'mobile') {
+            canvasContainer.classList.add('mobile-view');
+            canvasContainer.classList.add('mobile-frame');
+            
+            // Update button styles
+            desktopBtn.classList.remove('bg-primary', 'text-white');
+            desktopBtn.classList.add('bg-white', 'hover:bg-gray-50');
+            mobileBtn.classList.remove('bg-white', 'hover:bg-gray-50');
+            mobileBtn.classList.add('bg-primary', 'text-white');
+        } else {
+            canvasContainer.classList.remove('mobile-view');
+            canvasContainer.classList.remove('mobile-frame');
+            
+            // Update button styles
+            mobileBtn.classList.remove('bg-primary', 'text-white');
+            mobileBtn.classList.add('bg-white', 'hover:bg-gray-50');
+            desktopBtn.classList.remove('bg-white', 'hover:bg-gray-50');
+            desktopBtn.classList.add('bg-primary', 'text-white');
+        }
     }
     
     function publishPage() {

@@ -50,19 +50,41 @@
 		
 		function toggleSidebar() {
 			const sidebar = document.getElementById('mobile-sidebar');
-			sidebar.classList.toggle('open');
+			const overlay = document.getElementById('sidebar-overlay');
+			
+			if (sidebar && overlay) {
+				sidebar.classList.toggle('open');
+				overlay.classList.toggle('hidden');
+			}
 		}
 		
-		// Close sidebar when clicking outside
-		document.addEventListener('click', function(event) {
-			const sidebar = document.getElementById('mobile-sidebar');
-			const openButton = document.getElementById('btnOpenSidebar');
+		// Wait for DOM to be ready
+		document.addEventListener('DOMContentLoaded', function() {
+			// Close sidebar when clicking overlay
+			const overlay = document.getElementById('sidebar-overlay');
+			if (overlay) {
+				overlay.addEventListener('click', function(e) {
+					if (e.target === overlay) {
+						toggleSidebar();
+					}
+				});
+			}
 			
-			if (sidebar.classList.contains('open') && 
-				!sidebar.contains(event.target) && 
-				event.target !== openButton &&
-				!openButton.contains(event.target)) {
-				sidebar.classList.remove('open');
+			// Close sidebar when clicking menu item
+			const sidebar = document.getElementById('mobile-sidebar');
+			if (sidebar) {
+				const menuLinks = sidebar.querySelectorAll('a, button[type="submit"]');
+				menuLinks.forEach(link => {
+					link.addEventListener('click', function() {
+						// Small delay to allow navigation
+						setTimeout(() => {
+							const sidebarEl = document.getElementById('mobile-sidebar');
+							const overlayEl = document.getElementById('sidebar-overlay');
+							if (sidebarEl) sidebarEl.classList.remove('open');
+							if (overlayEl) overlayEl.classList.add('hidden');
+						}, 100);
+					});
+				});
 			}
 		});
 	</script>
@@ -189,53 +211,8 @@
 		</div>
 	</div>
 
-
-	<!-- Mobile sidebar -->
-	<div id="mobile-sidebar" class="fixed inset-0 z-20 hidden">
-		<div class="absolute inset-0 bg-gray-600 bg-opacity-75" onclick="toggleSidebar()"></div>
-		<div class="relative flex-1 flex flex-col max-w-xs w-full bg-white">
-			<div class="h-16 flex items-center px-6 border-b">
-				<span class="text-2xl font-bold text-primary">HubLink</span>
-			</div>
-			<nav class="flex-1 p-4 space-y-1">
-				<a href="{{ route('cms.home') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700">
-					<svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9 9 9M4 10v10h6V14h4v6h6V10"/></svg>
-					<span>Home</span>
-				</a>
-				<a href="{{ route('cms.builder.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700">
-					<svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-					<span>Builder</span>
-				</a>
-				<a href="{{ route('cms.products.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700">
-					<svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V7a2 2 0 00-2-2h-3l-2-2H9L7 5H5a2 2 0 00-2 2v6m17 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6"/></svg>
-					<span>Produk</span>
-				</a>
-				<a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700">
-					<svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/></svg>
-					<span>Hub</span>
-				</a>
-				<a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700">
-					<svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h10M9 21h6"/></svg>
-					<span>Statistik</span>
-				</a>
-			</nav>
-			<div class="p-4 border-t border-gray-200">
-				<a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700">
-					<svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-					<span>Logout</span>
-				</a>
-			</div>
-		</div>
-	</div>
-
-	<script>
-		function toggleSidebar() {
-			const sidebar = document.getElementById('mobile-sidebar');
-			if (sidebar) {
-				sidebar.classList.toggle('hidden');
-			}
-		}
-	</script>
+	<!-- Sidebar Overlay for Mobile -->
+	<div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden md:hidden"></div>
 	
 	@stack('scripts')
 	

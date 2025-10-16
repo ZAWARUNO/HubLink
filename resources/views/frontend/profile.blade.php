@@ -6,7 +6,56 @@
 	<title>{{ $domain->title ?? ucfirst($domain->slug) }} — HubLink</title>
 	<script src="https://cdn.tailwindcss.com"></script>
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-	<style>body{font-family:'Inter',sans-serif}</style>
+	<style>
+		body{font-family:'Inter',sans-serif}
+		
+		/* Responsive Optimizations */
+		@media (max-width: 640px) {
+			/* Reduce padding on mobile */
+			.bg-white.rounded-3xl {
+				padding: 1.5rem !important;
+				border-radius: 1.5rem !important;
+			}
+			
+			/* Make buttons full width on mobile */
+			a[class*="px-"], button[class*="px-"] {
+				width: 100%;
+				text-align: center;
+				display: block;
+			}
+			
+			/* Adjust text sizes for mobile */
+			.text-xl {
+				font-size: 1.125rem !important;
+			}
+			
+			.text-2xl {
+				font-size: 1.5rem !important;
+			}
+			
+			/* Ensure images are responsive */
+			img {
+				max-width: 100%;
+				height: auto;
+			}
+			
+			/* Stack profile layout on very small screens */
+			.flex.items-center.gap-4 {
+				flex-direction: column;
+				text-align: center;
+			}
+			
+			/* Adjust template card width */
+			.max-w-sm {
+				max-width: 100% !important;
+			}
+		}
+		
+		/* Smooth transitions */
+		* {
+			transition: all 0.2s ease;
+		}
+	</style>
 	<script>
 		tailwind.config = { theme: { extend: { colors: { primary: '#00c499', 'primary-dark':'#00a882' } } } }
 	</script>
@@ -151,6 +200,70 @@
                                     $dividerStyles = "border: {$dividerThickness} {$dividerStyle} {$dividerColor}; border-top-width: {$dividerThickness}; border-bottom: 0; border-left: 0; border-right: 0;";
                                 @endphp
                                 <hr style="{{ $dividerStyles }}">
+                                @break
+                            @case('profile')
+                                @php
+                                    $showPhoto = $component->properties['showPhoto'] ?? true;
+                                    $showName = $component->properties['showName'] ?? true;
+                                    $showUsername = $component->properties['showUsername'] ?? true;
+                                    $alignment = $component->properties['alignment'] ?? 'left';
+                                    $layout = $component->properties['layout'] ?? 'horizontal';
+                                    $photoSize = $component->properties['photoSize'] ?? 'medium';
+                                    
+                                    // Photo size mapping
+                                    $sizeMap = [
+                                        'small' => 'w-12 h-12',
+                                        'medium' => 'w-16 h-16',
+                                        'large' => 'w-24 h-24',
+                                        'xlarge' => 'w-32 h-32'
+                                    ];
+                                    $photoSizeClass = $sizeMap[$photoSize] ?? 'w-16 h-16';
+                                    
+                                    // Alignment classes
+                                    $alignmentClass = '';
+                                    if ($alignment === 'center') {
+                                        $alignmentClass = 'justify-center text-center';
+                                    } elseif ($alignment === 'right') {
+                                        $alignmentClass = 'justify-end text-right';
+                                    } else {
+                                        $alignmentClass = 'justify-start text-left';
+                                    }
+                                    
+                                    // Layout classes
+                                    $layoutClass = 'flex items-center gap-4 p-4';
+                                    if ($layout === 'vertical') {
+                                        $layoutClass = 'flex flex-col items-center gap-4 p-4 text-center';
+                                    } elseif ($layout === 'compact') {
+                                        $layoutClass = 'flex items-center gap-2 p-2';
+                                    } elseif ($layout === 'card') {
+                                        $layoutClass = 'flex flex-col items-center gap-4 p-6 bg-gray-50 rounded-lg border';
+                                    }
+                                @endphp
+                                <div class="{{ $layoutClass }} {{ $alignmentClass }}">
+                                    @if($showPhoto)
+                                        @if($domain->user->profile_photo)
+                                            <img src="{{ asset('storage/' . $domain->user->profile_photo) }}" 
+                                                 alt="{{ $domain->user->name }}" 
+                                                 class="{{ $photoSizeClass }} rounded-full object-cover">
+                                        @else
+                                            <div class="{{ $photoSizeClass }} rounded-full bg-primary/10 flex items-center justify-center">
+                                                <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                                </svg>
+                                            </div>
+                                        @endif
+                                    @endif
+                                    @if($showName || $showUsername)
+                                        <div>
+                                            @if($showName)
+                                                <h3 class="font-semibold text-lg text-gray-900">{{ $domain->user->name }}</h3>
+                                            @endif
+                                            @if($showUsername)
+                                                <p class="text-gray-600 text-sm">{{ '@' . $domain->slug }}</p>
+                                            @endif
+                                        </div>
+                                    @endif
+                                </div>
                                 @break
                             @case('template')
                                 @php
