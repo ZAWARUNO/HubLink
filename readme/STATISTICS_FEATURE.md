@@ -80,18 +80,23 @@ Halaman statistik dashboard yang menampilkan analisis data bisnis dengan chart y
 
 ## Data yang Ditampilkan
 
-### Real Data
+### Real Data (✅ Updated 16 Okt 2025)
 
--   Total pembelian (dari tabel orders)
--   Total pendapatan (dari tabel orders dengan status settlement)
--   Total produk (dari tabel components)
--   Data chart pendapatan bulanan
--   Data produk terlaris
--   Performa domain
+-   ✅ **Total pengunjung** - Berdasarkan distinct customer_email dari orders
+-   ✅ **Total pembelian** - Dari tabel orders dengan status settlement
+-   ✅ **Total pendapatan** - Dari tabel orders dengan status settlement
+-   ✅ **Total produk** - Dari tabel components dengan type 'template'
+-   ✅ **Persentase pertumbuhan** - Perhitungan real bulan ini vs bulan lalu
+-   ✅ **Data chart pendapatan bulanan** - 6 bulan terakhir
+-   ✅ **Data produk terlaris** - Top 5 berdasarkan penjualan
+-   ✅ **Performa domain** - Berdasarkan revenue real
 
-### Simulasi Data
+### Perubahan dari Data Dummy ke Real:
 
--   Total pengunjung (simulasi berdasarkan jumlah order x 3-8)
+1. **Total Pengunjung**: Dulu pakai `rand(3, 8)`, sekarang pakai `distinct customer_email`
+2. **Persentase Pertumbuhan**: Dulu hardcoded (+12%, +8%, +15%), sekarang dihitung real
+3. **Total Produk**: Dulu query `type = 'product'`, sekarang `type = 'template'`
+4. **Warna Pertumbuhan**: Hijau untuk positif, merah untuk negatif, abu-abu untuk 0%
 
 ## Responsivitas
 

@@ -31,7 +31,13 @@
                 <div>
                     <p class="text-gray-500 text-sm">Total Pengunjung</p>
                     <p class="text-2xl sm:text-3xl font-bold text-gray-900 mt-1">{{ number_format($totalVisitors) }}</p>
-                    <p class="text-green-600 text-xs sm:text-sm mt-1">+12% dari bulan lalu</p>
+                    @if($visitorsGrowth != 0)
+                        <p class="{{ $visitorsGrowth > 0 ? 'text-green-600' : 'text-red-600' }} text-xs sm:text-sm mt-1">
+                            {{ $visitorsGrowth > 0 ? '+' : '' }}{{ $visitorsGrowth }}% dari bulan lalu
+                        </p>
+                    @else
+                        <p class="text-gray-500 text-xs sm:text-sm mt-1">Tidak ada perubahan</p>
+                    @endif
                 </div>
                 <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                     <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -47,7 +53,13 @@
                 <div>
                     <p class="text-gray-500 text-sm">Total Pembelian</p>
                     <p class="text-2xl sm:text-3xl font-bold text-gray-900 mt-1">{{ number_format($totalPurchases) }}</p>
-                    <p class="text-green-600 text-xs sm:text-sm mt-1">+8% dari bulan lalu</p>
+                    @if($purchasesGrowth != 0)
+                        <p class="{{ $purchasesGrowth > 0 ? 'text-green-600' : 'text-red-600' }} text-xs sm:text-sm mt-1">
+                            {{ $purchasesGrowth > 0 ? '+' : '' }}{{ $purchasesGrowth }}% dari bulan lalu
+                        </p>
+                    @else
+                        <p class="text-gray-500 text-xs sm:text-sm mt-1">Tidak ada perubahan</p>
+                    @endif
                 </div>
                 <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                     <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,7 +74,13 @@
                 <div>
                     <p class="text-gray-500 text-sm">Total Pendapatan</p>
                     <p class="text-2xl sm:text-3xl font-bold text-gray-900 mt-1">Rp {{ number_format($totalRevenue, 0, ',', '.') }}</p>
-                    <p class="text-green-600 text-xs sm:text-sm mt-1">+15% dari bulan lalu</p>
+                    @if($revenueGrowth != 0)
+                        <p class="{{ $revenueGrowth > 0 ? 'text-green-600' : 'text-red-600' }} text-xs sm:text-sm mt-1">
+                            {{ $revenueGrowth > 0 ? '+' : '' }}{{ $revenueGrowth }}% dari bulan lalu
+                        </p>
+                    @else
+                        <p class="text-gray-500 text-xs sm:text-sm mt-1">Tidak ada perubahan</p>
+                    @endif
                 </div>
                 <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
                     <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

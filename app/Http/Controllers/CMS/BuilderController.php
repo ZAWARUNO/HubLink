@@ -389,18 +389,8 @@ class BuilderController extends Controller
                 'digital_product_path' => $productData['digital_product_path'] ?? null
             ]);
 
-            // Also create a template product for future use
-            $templateComponent = $domain->components()->create([
-                'type' => 'template',
-                'properties' => $newProperties,
-                'digital_product_path' => $productData['digital_product_path'] ?? null,
-                'order' => $domain->components()->count(),
-                'is_published' => false
-            ]);
-
             return response()->json([
                 'success' => true,
-                'product' => $templateComponent,
                 'component' => $component
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {

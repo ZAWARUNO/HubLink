@@ -36,4 +36,9 @@ class Domain extends Model
     {
         return $this->hasMany(Order::class);
     }
+
+    public function visitors()
+    {
+        return $this->hasMany(Visitor::class);
+    }
 }
