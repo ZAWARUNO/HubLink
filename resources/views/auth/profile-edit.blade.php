@@ -44,6 +44,7 @@
             position: relative;
             overflow: hidden;
             display: inline-block;
+            width: 100%;
         }
         
         .file-input-wrapper input[type=file] {
@@ -54,6 +55,13 @@
             width: 100%;
             height: 100%;
             cursor: pointer;
+        }
+        
+        /* Filename display styling */
+        #file-name {
+            word-break: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
         }
         
         /* Improved mobile spacing */
@@ -143,12 +151,12 @@
                         </div>
                         
                         <div class="w-full flex flex-col items-center sm:items-start">
-                            <div class="file-input-wrapper w-full max-w-xs">
-                                <button type="button" class="file-button bg-primary hover:bg-primary-dark text-white py-2 px-4 rounded-lg transition flex items-center justify-center gap-2 w-full">
-                                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="file-input-wrapper w-full sm:max-w-xs">
+                                <button type="button" class="file-button bg-primary hover:bg-primary-dark text-white py-2.5 px-4 rounded-lg transition flex items-center justify-center gap-2 w-full text-sm sm:text-base font-medium">
+                                    <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
                                     </svg>
-                                    <span class="text-sm sm:text-base">Pilih Foto</span>
+                                    <span>Pilih Foto</span>
                                 </button>
                                 <input 
                                     type="file" 
@@ -157,14 +165,16 @@
                                     onchange="handleFileSelect(this)"
                                 >
                             </div>
-                            <p id="file-name" class="mt-2 text-xs sm:text-sm text-gray-500 text-center sm:text-left">
-                                @if($user->profile_photo)
-                                    {{ basename($user->profile_photo) }}
-                                @else
-                                    Belum ada file dipilih
-                                @endif
-                            </p>
-                            <p class="mt-1 text-xs text-gray-500 text-center sm:text-left">Format: JPG, PNG, GIF (Max: 2MB)</p>
+                            <div class="w-full sm:max-w-xs mt-2">
+                                <p id="file-name" class="text-xs sm:text-sm text-gray-600 text-center sm:text-left font-medium break-all px-2 sm:px-0">
+                                    @if($user->profile_photo)
+                                        {{ basename($user->profile_photo) }}
+                                    @else
+                                        Belum ada file dipilih
+                                    @endif
+                                </p>
+                                <p class="mt-1 text-xs text-gray-500 text-center sm:text-left px-2 sm:px-0">Format: JPG, PNG, GIF (Max: 2MB)</p>
+                            </div>
                         </div>
                     </div>
                 </div>

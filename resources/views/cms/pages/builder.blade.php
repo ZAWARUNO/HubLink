@@ -268,6 +268,14 @@
                 </button>
             </div>
             
+            <!-- Mobile Builder Link -->
+            <a href="{{ route('cms.builder.mobile', ['domainId' => $domain->id]) }}" class="px-3 py-2 border rounded-lg flex items-center gap-2 hover:bg-gray-50" title="Switch to Mobile Builder">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                </svg>
+                <span class="text-sm hidden md:inline">Mobile Builder</span>
+            </a>
+            
             <button onclick="previewPage()" class="px-4 py-2 border rounded-lg flex items-center gap-2 hover:bg-gray-50">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>

@@ -40,6 +40,7 @@ Route::middleware('auth')->prefix('cms')->name('cms.')->group(function () {
     // Builder routes
     Route::get('/builder', [CmsBuilderController::class, 'index'])->name('builder.index');
     Route::get('/builder/{domainId}', [CmsBuilderController::class, 'show'])->name('builder.show');
+    Route::get('/builder/{domainId}/mobile', [CmsBuilderController::class, 'showMobile'])->name('builder.mobile');
     Route::post('/builder/{domainId}/component', [CmsBuilderController::class, 'storeComponent'])->name('builder.component.store');
     Route::put('/builder/{domainId}/component/{componentId}', [CmsBuilderController::class, 'updateComponent'])->name('builder.component.update');
     Route::delete('/builder/{domainId}/component/{componentId}', [CmsBuilderController::class, 'deleteComponent'])->name('builder.component.delete');

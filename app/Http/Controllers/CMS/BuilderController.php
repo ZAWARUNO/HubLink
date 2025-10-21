@@ -24,6 +24,15 @@ class BuilderController extends Controller
 
     public function show($domainId)
     {
+        // Detect if user is on mobile device
+        $userAgent = request()->header('User-Agent');
+        $isMobile = preg_match('/(android|iphone|ipad|mobile|phone)/i', $userAgent);
+        
+        // Redirect to mobile builder if on mobile device
+        if ($isMobile) {
+            return redirect()->route('cms.builder.mobile', ['domainId' => $domainId]);
+        }
+        
         $user = Auth::user();
         $domain = Domain::where('id', $domainId)
             ->where('user_id', $user->id)
@@ -44,6 +53,30 @@ class BuilderController extends Controller
             ->get();
 
         return view('cms.pages.builder', compact('domain', 'components', 'publishedComponents', 'templateProducts'));
+    }
+
+    public function showMobile($domainId)
+    {
+        $user = Auth::user();
+        $domain = Domain::where('id', $domainId)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        // Get published components for preview
+        $publishedComponents = $domain->components()
+            ->where('is_published', true)
+            ->orderBy('order')
+            ->get();
+
+        // Get all components for builder
+        $components = $domain->components()->orderBy('order')->get();
+
+        // Get template products for this user
+        $templateProducts = Component::where('type', 'template')
+            ->whereIn('domain_id', $user->domains->pluck('id'))
+            ->get();
+
+        return view('cms.pages.builder-mobile', compact('domain', 'components', 'publishedComponents', 'templateProducts'));
     }
 
     public function storeComponent(Request $request, $domainId)
