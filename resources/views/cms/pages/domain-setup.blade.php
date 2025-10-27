@@ -12,9 +12,9 @@
         @endif
 		<div>
 			<label class="block text-sm font-medium text-gray-700 mb-1">Nama Domain</label>
-			<div class="flex">
-				<span class="inline-flex items-center px-3 rounded-l-md border border-r-0 bg-gray-50 text-gray-500">hub.link/</span>
-				<input name="slug" value="{{ old('slug', isset($domain) ? $domain->slug : '') }}" class="flex-1 rounded-r-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="nama-domain" required>
+			<div class="flex flex-col sm:flex-row">
+				<span class="inline-flex items-center px-3 rounded-t-md sm:rounded-l-md sm:rounded-t-none border border-b-0 sm:border-b sm:border-r-0 bg-gray-50 text-gray-500 text-sm">hub.link/</span>
+				<input name="slug" value="{{ old('slug', isset($domain) ? $domain->slug : '') }}" class="flex-1 rounded-b-md sm:rounded-r-md sm:rounded-b-none border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="nama-domain" required>
 			</div>
 			@error('slug')
 				<p class="text-red-600 text-sm mt-1">{{ $message }}</p>

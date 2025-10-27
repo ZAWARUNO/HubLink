@@ -27,6 +27,10 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
             'password' => 'required'
+        ], [
+            'email.required' => 'Email wajib diisi',
+            'email.email' => 'Format email tidak valid',
+            'password.required' => 'Password wajib diisi',
         ]);
 
         if ($validator->fails()) {
@@ -45,8 +49,8 @@ class AuthController extends Controller
         }
 
         return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
-        ]);
+            'email' => 'Email atau password salah. Silakan cek kembali data Anda.',
+        ])->withInput($request->only('email'));
     }
 
     public function register(Request $request)
@@ -57,7 +61,17 @@ class AuthController extends Controller
             'phone' => 'required|unique:users,phone|regex:/^\+62/',
             'password' => 'required|min:8|confirmed',
         ], [
-            'phone.regex' => 'Nomor telepon harus diawali dengan +62',
+            'username.required' => 'Username wajib diisi',
+            'username.unique' => 'Username sudah digunakan, silakan pilih username lain',
+            'email.required' => 'Email wajib diisi',
+            'email.email' => 'Format email tidak valid',
+            'email.unique' => 'Email sudah terdaftar, silakan gunakan email lain',
+            'phone.required' => 'Nomor telepon wajib diisi',
+            'phone.unique' => 'Nomor telepon sudah terdaftar',
+            'phone.regex' => 'Nomor telepon harus diawali dengan +62 (contoh: +6281234567890)',
+            'password.required' => 'Password wajib diisi',
+            'password.min' => 'Password minimal harus 8 karakter',
+            'password.confirmed' => 'Konfirmasi password tidak sesuai dengan password',
         ]);
 
         if ($validator->fails()) {
@@ -71,7 +85,7 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        // Create domain entry with slug matching username
+        
         Domain::create([
             'user_id' => $user->id,
             'slug' => $request->username,

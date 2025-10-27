@@ -65,10 +65,15 @@
                         id="email" 
                         name="email" 
                         value="{{ old('email') }}"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                        class="w-full px-4 py-3 border {{ $errors->has('email') ? 'border-red-500 bg-red-50' : 'border-gray-300' }} rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
                         placeholder="masukkan email Anda"
                         required
                     >
+                    @if ($errors->has('email'))
+                        <p class="mt-2 text-sm text-red-600 flex items-center">
+                            <span class="mr-1">⚠️</span> {{ $errors->first('email') }}
+                        </p>
+                    @endif
                 </div>
 
                 <div class="mb-6">
@@ -77,10 +82,15 @@
                         type="password" 
                         id="password" 
                         name="password" 
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                        class="w-full px-4 py-3 border {{ $errors->has('password') ? 'border-red-500 bg-red-50' : 'border-gray-300' }} rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
                         placeholder="masukkan password Anda"
                         required
                     >
+                    @if ($errors->has('password'))
+                        <p class="mt-2 text-sm text-red-600 flex items-center">
+                            <span class="mr-1">⚠️</span> {{ $errors->first('password') }}
+                        </p>
+                    @endif
                 </div>
 
                 <button 

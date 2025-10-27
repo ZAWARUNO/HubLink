@@ -50,9 +50,11 @@
         color: white;
         display: flex;
         align-items: center;
-        justify-center;
+        justify-content: center;
         box-shadow: 0 4px 12px rgba(0, 196, 153, 0.4);
         z-index: 100;
+        border: none;
+        cursor: pointer;
     }
     
     .component-wrapper {
@@ -103,6 +105,7 @@
             <button onclick="previewPage()" class="px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                 </svg>
             </button>
             <button onclick="publishPage()" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg">
@@ -245,11 +248,22 @@
         </button>
     </div>
     <div class="flex-1 overflow-y-auto p-4 space-y-2">
+        @php
+            $componentIcons = [
+                'text' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 00-2 2v9a2 2 0 002 2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>',
+                'button' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path>',
+                'image' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>',
+                'link' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>',
+                'divider' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 0h-4m4 0l-5-5"></path>',
+                'profile' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>',
+                'template' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>'
+            ];
+        @endphp
         @foreach(['text' => 'Text', 'button' => 'Button', 'image' => 'Image', 'link' => 'Link', 'divider' => 'Divider', 'profile' => 'Profile', 'template' => 'Template'] as $type => $label)
         <button onclick="addComponent('{{ $type }}')" class="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-primary hover:bg-primary/5 flex items-center gap-3 transition-all">
             <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                 <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    {!! $componentIcons[$type] !!}
                 </svg>
             </div>
             <div class="text-left">

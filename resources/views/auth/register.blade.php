@@ -71,11 +71,16 @@
                         id="username" 
                         name="username" 
                         value="{{ old('username') }}"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition input-field"
+                        class="w-full px-4 py-3 border {{ $errors->has('username') ? 'border-red-500 bg-red-50' : 'border-gray-300' }} rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition input-field"
                         placeholder="masukkan username Anda"
                         required
                     >
                     <p class="mt-1 text-sm text-gray-500">Ini akan menjadi link Anda contohnya "HubLink.com/(username)"</p>
+                    @if ($errors->has('username'))
+                        <p class="mt-2 text-sm text-red-600 flex items-center">
+                            <span class="mr-1">⚠️</span> {{ $errors->first('username') }}
+                        </p>
+                    @endif
                 </div>
 
                 <div class="mb-5">
@@ -85,10 +90,15 @@
                         id="email" 
                         name="email" 
                         value="{{ old('email') }}"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition input-field"
+                        class="w-full px-4 py-3 border {{ $errors->has('email') ? 'border-red-500 bg-red-50' : 'border-gray-300' }} rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition input-field"
                         placeholder="masukkan email Anda"
                         required
                     >
+                    @if ($errors->has('email'))
+                        <p class="mt-2 text-sm text-red-600 flex items-center">
+                            <span class="mr-1">⚠️</span> {{ $errors->first('email') }}
+                        </p>
+                    @endif
                 </div>
 
                 <div class="mb-5">
@@ -98,11 +108,16 @@
                         id="phone" 
                         name="phone" 
                         value="{{ old('phone') }}"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition input-field"
+                        class="w-full px-4 py-3 border {{ $errors->has('phone') ? 'border-red-500 bg-red-50' : 'border-gray-300' }} rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition input-field"
                         placeholder="masukkan nomor telepon Anda"
                         required
                     >
                     <p class="mt-1 text-sm text-gray-500">Nomor telepon harus diawali dengan +62</p>
+                    @if ($errors->has('phone'))
+                        <p class="mt-2 text-sm text-red-600 flex items-center">
+                            <span class="mr-1">⚠️</span> {{ $errors->first('phone') }}
+                        </p>
+                    @endif
                 </div>
 
                 <div class="mb-5">
@@ -111,10 +126,15 @@
                         type="password" 
                         id="password" 
                         name="password" 
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition input-field"
+                        class="w-full px-4 py-3 border {{ $errors->has('password') ? 'border-red-500 bg-red-50' : 'border-gray-300' }} rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition input-field"
                         placeholder="masukkan password Anda"
                         required
                     >
+                    @if ($errors->has('password'))
+                        <p class="mt-2 text-sm text-red-600 flex items-center">
+                            <span class="mr-1">⚠️</span> {{ $errors->first('password') }}
+                        </p>
+                    @endif
                 </div>
 
                 <div class="mb-6">
@@ -123,10 +143,15 @@
                         type="password" 
                         id="password_confirmation" 
                         name="password_confirmation" 
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition input-field"
+                        class="w-full px-4 py-3 border {{ $errors->has('password') ? 'border-red-500 bg-red-50' : 'border-gray-300' }} rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition input-field"
                         placeholder="konfirmasi password Anda"
                         required
                     >
+                    @if ($errors->has('password'))
+                        <p class="mt-2 text-sm text-red-600 flex items-center">
+                            <span class="mr-1">⚠️</span> {{ $errors->first('password') }}
+                        </p>
+                    @endif
                 </div>
 
                 <button 
